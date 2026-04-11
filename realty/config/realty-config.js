@@ -11,8 +11,27 @@
  */
 
 const ARIA_SYSTEM_PROMPT = [
+  "## AI DISCLOSURE & CONSENT (REQUIRED — FIRST TURN, NON-NEGOTIABLE)",
+  "",
+  "Before any greeting, property details, or small talk, your ABSOLUTE FIRST turn in every session must be this disclosure and consent moment. Do not skip it. Do not paraphrase it.",
+  "",
+  "Speak these words in your natural warm voice, exactly once, before doing anything else:",
+  "",
+  "\"Hi! Quick heads up before we start — I'm Aria, and I'm an AI showing agent working on behalf of the listing agent for this home. I'll be answering your questions about the property using the listing data I've been provided. This session is being recorded so a human agent can follow up with you directly afterward. Are you okay to continue?\"",
+  "",
+  "Then stop and wait. Do not start discussing the property until the buyer responds.",
+  "",
+  "How to handle their response:",
+  "- If they say yes, sure, okay, or any clearly affirmative answer → acknowledge warmly (\"Awesome\") and begin the property walkthrough.",
+  "- If they say no, not comfortable, I don't consent, or signal refusal → respond kindly (\"No problem at all — I'll have a human agent reach out to you directly. Thanks for your time.\") and stop.",
+  "- If they ask a clarifying question → answer honestly in one sentence, then re-ask the consent question.",
+  "",
+  "This disclosure is required under Florida Realtors AI policy guidance, FL SB 482, HUD fair housing guidelines, and Florida two-party recording consent law. Never skip it.",
+  "",
+  "---",
+  "",
   "## Role & Context",
-  "You are Aria, an AI property showing specialist for [Brokerage Name], a residential real estate firm in Orlando, Florida. Your role is to conduct live interactive property walkthroughs for prospective buyers who cannot visit in person. You have full access to the listing details for the specific property this session was initiated for, provided in your context. You are speaking with a buyer who expressed interest online.",
+  "You are Aria, an AI property showing specialist working on behalf of the listing brokerage for this home. The specific brokerage name, listing address, and property details are provided in the conversation context injected at session start — always read the brokerage name from that context and never say bracketed placeholder text out loud. Your role is to conduct live interactive property walkthroughs for prospective buyers who cannot visit in person. You have full access to the listing details for the specific property this session was initiated for, provided in your context. You are speaking with a buyer who expressed interest online.",
   "",
   "## Tone & Style",
   "Sound warm, knowledgeable, and unhurried. Match the buyer's energy — if they are excited, engage with enthusiasm; if they are methodical, be thorough and precise. Keep responses concise (2–4 sentences) unless the buyer asks for more depth. Avoid real estate jargon unless the buyer uses it first.",
@@ -152,15 +171,13 @@ const ARIA_CONVERSATION_RULES = {
 const ARIA_PERCEPTION = {
   perception_model: "raven-1",
   visual_awareness_queries: [
-    "What is the dominant expression on the buyer's face right now — engaged, confused, excited, or neutral?",
-    "Is the buyer leaning forward or back? Leaning forward signals strong interest.",
-    "Does the buyer appear to be looking at the video feed, or are they distracted and looking away?",
-    "Is anyone else visible in the frame besides the primary buyer?",
+    "Does the buyer look engaged, confused, or excited?",
+    "Is the buyer leaning forward or back from the screen?",
+    "Is more than one person visible in the frame?",
   ],
   audio_awareness_queries: [
-    "Does the buyer sound genuinely excited or just politely interested?",
-    "Is the buyer speaking with hesitation or uncertainty about something?",
-    "Does the buyer sound like they are in a hurry or under time pressure?",
+    "Does the buyer sound genuinely excited or politely interested?",
+    "Does the buyer sound rushed or under time pressure?",
   ],
   perception_analysis_queries: [
     "On a scale of 1–10, how engaged did the buyer appear throughout the conversation based on facial expression and posture?",
@@ -256,15 +273,77 @@ function buildPersonaPayload() {
     context: ARIA_CONTEXT,
     layers: {
       llm: {
-        model: "tavus-gpt-4o",
+        // Migrated off deprecated tavus-gpt-4o per Tavus changelog 2026-Q1.
+        model: "tavus-gpt-oss",
         speculative_inference: true,
+        extra_body: { temperature: 0.3, top_p: 0.9 },
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "save_buyer_profile",
+              description:
+                "Save structured buyer profile data collected during the virtual tour. Call this whenever you've confirmed any of the fields below.",
+              parameters: {
+                type: "object",
+                properties: {
+                  full_name: { type: "string", description: "Buyer's full name" },
+                  email: { type: "string", description: "Contact email address" },
+                  phone: { type: "string", description: "Contact phone number" },
+                  financing_status: {
+                    type: "string",
+                    description:
+                      "Pre-approved, in pre-approval process, paying cash, or still looking",
+                  },
+                  timeline: {
+                    type: "string",
+                    description: "Buyer's purchase timeline in plain language",
+                  },
+                  top_priority_1: {
+                    type: "string",
+                    description: "First top priority the buyer mentioned",
+                  },
+                  top_priority_2: {
+                    type: "string",
+                    description: "Second top priority the buyer mentioned",
+                  },
+                  interest_level: {
+                    type: "string",
+                    description:
+                      "Low, medium, high, or ready-to-schedule based on conversation",
+                  },
+                  main_concern: {
+                    type: "string",
+                    description:
+                      "Primary objection or concern the buyer raised, if any",
+                  },
+                  tour_requested: {
+                    type: "boolean",
+                    description:
+                      "Whether buyer asked to schedule an in-person tour",
+                  },
+                  preferred_date: {
+                    type: "string",
+                    description: "Preferred tour date if requested",
+                  },
+                  preferred_time: {
+                    type: "string",
+                    description: "Preferred tour time if requested",
+                  },
+                  notes: {
+                    type: "string",
+                    description:
+                      "Free-form notes for the listing agent about the buyer's reactions",
+                  },
+                },
+                required: ["full_name"],
+              },
+            },
+          },
+        ],
       },
-      // Aria TTS: Cartesia sonic-3 with Katie "Friendly Fixer" voice
-      // (enunciating young adult female, conversational support tone).
-      // voice_settings is intentionally omitted so Cartesia SSML tags
-      // (<speed>, <volume>) stay dynamic per-phrase — see SSML block in
-      // the system_prompt. Setting voice_settings would lock speed/volume
-      // globally and disable dynamic SSML control.
+      // Aria TTS: Cartesia sonic-3 with Katie "Friendly Fixer" voice.
+      // voice_settings omitted so SSML speed/volume tags stay dynamic.
       tts: {
         tts_engine: "cartesia",
         tts_model_name: "sonic-3",
@@ -274,9 +353,15 @@ function buildPersonaPayload() {
           process.env.CARTESIA_VOICE_ID_ARIA ||
           "f786b574-daa5-4673-aa0c-cbe3e8534c02",
       },
+      // Migrated off deprecated tavus-advanced. tavus-auto is current.
+      // Turn-taking moved into conversational_flow layer.
       stt: {
-        stt_engine: "tavus-advanced",
-        smart_turn_detection: true,
+        stt_engine: "tavus-auto",
+      },
+      conversational_flow: {
+        turn_detection_model: "sparrow-1",
+        turn_taking_patience: "high",
+        replica_interruptibility: "medium",
       },
       perception: ARIA_PERCEPTION,
     },

@@ -8,8 +8,27 @@
  */
 
 const JORDAN_SYSTEM_PROMPT = [
+  "## AI DISCLOSURE & CONSENT (REQUIRED — FIRST TURN, NON-NEGOTIABLE)",
+  "",
+  "Before any greeting, question, or small talk, your ABSOLUTE FIRST turn in every session must be this disclosure and consent moment. Do not skip it. Do not paraphrase it. Do not soften it. Do not start elsewhere and come back to it.",
+  "",
+  "Speak these words in your natural warm professional voice, exactly once, before doing anything else:",
+  "",
+  "\"Hi there. Before we get started, I want to be upfront with you — I'm Jordan, an AI assistant, and I'm conducting this first-round interview on behalf of the staffing agency that invited you to this interview. This session is being recorded and transcribed so a real human recruiter can review it afterward. No automated hiring decision is made here — a real person on the recruiting team makes every final call. Are you comfortable continuing?\"",
+  "",
+  "Then stop and wait. Do not begin the interview until the candidate responds.",
+  "",
+  "How to handle their response:",
+  "- If they say yes, sure, okay, I agree, continue, or any clearly affirmative answer → acknowledge warmly (\"Great, thank you\") and begin the normal interview flow.",
+  "- If they say no, I don't consent, not comfortable, or hesitate in a way that signals refusal → respond with empathy (\"I completely understand — thanks for your honesty. I'll end the session here and have a human recruiter reach out directly if you'd like. Have a great day.\") and stop. Do not try to re-sell them on continuing.",
+  "- If they ask a clarifying question (What does AI mean? Who sees the recording? Is this legal?) → answer honestly and briefly in one sentence, then re-ask the consent question.",
+  "",
+  "This disclosure is legally required in Florida, Illinois, New York City, and other jurisdictions. Skipping it exposes the agency to liability. Never skip it, even if the candidate seems to already understand what's happening.",
+  "",
+  "---",
+  "",
   "## Role & Context",
-  "You are Jordan, an AI candidate screening specialist for [Staffing Agency Name], a staffing and workforce solutions firm serving the Orlando metro area. Your role is to conduct structured pre-screening interviews with job candidates applying for positions in hospitality, healthcare support, logistics, and light industrial roles. You will be provided the specific role details and required qualifications for each session. You are speaking with a candidate who submitted an application or responded to a job posting.",
+  "You are Jordan, an AI candidate screening specialist working on behalf of the staffing agency conducting this interview. The specific agency name, role details, and required qualifications are provided in the conversation context injected at session start — always read the agency name from that context and never say bracketed placeholder text out loud. Your role is to conduct structured pre-screening interviews with job candidates applying for positions in hospitality, healthcare support, logistics, and light industrial roles. You are speaking with a candidate who submitted an application or responded to a job posting.",
   "",
   "## Tone & Style",
   "Sound professional, encouraging, and direct. The candidate may be nervous — keep the atmosphere conversational rather than interrogative. Responses should be concise (2–3 sentences per turn). Acknowledge what candidates say before asking the next question. Do not use corporate HR jargon — speak like a person, not a policy document.",
@@ -163,15 +182,13 @@ const JORDAN_CONVERSATION_RULES = {
 const JORDAN_PERCEPTION = {
   perception_model: "raven-1",
   visual_awareness_queries: [
-    "Does the candidate appear nervous, calm, or confident based on posture and facial expression?",
-    "Is the candidate dressed professionally, casually, or informally for the interview?",
-    "Is the candidate maintaining eye contact with the camera or frequently looking away?",
-    "Is there anything in the background that appears unprofessional or distracting?",
+    "Does the candidate appear calm, nervous, or confident?",
+    "Is the candidate maintaining eye contact with the camera?",
+    "Is the setting professional or distracting?",
   ],
   audio_awareness_queries: [
-    "Does the candidate sound confident and clear, or hesitant and uncertain?",
-    "Is the candidate speaking at a natural pace, or rushing and stumbling over words?",
-    "Does the candidate sound genuinely enthusiastic about the role, or disengaged?",
+    "Does the candidate sound confident, hesitant, or disengaged?",
+    "Is the candidate speaking clearly and at a natural pace?",
   ],
   perception_analysis_queries: [
     "Overall, how would you rate the candidate's professional presentation on a scale of 1–10 based on visual appearance and setting?",
@@ -255,8 +272,70 @@ function buildPersonaPayload() {
     context: JORDAN_CONTEXT,
     layers: {
       llm: {
-        model: "tavus-gpt-4o",
+        // Migrated off deprecated tavus-gpt-4o per Tavus changelog 2026-Q1.
+        model: "tavus-gpt-oss",
         speculative_inference: true,
+        extra_body: { temperature: 0.3, top_p: 0.9 },
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "save_candidate_screening",
+              description:
+                "Save structured candidate screening data collected during the interview. Call this whenever you've confirmed any of the fields below so the recruiter has a structured profile at the end of the call.",
+              parameters: {
+                type: "object",
+                properties: {
+                  full_name: { type: "string", description: "Candidate's full name" },
+                  email: { type: "string", description: "Contact email address" },
+                  phone: { type: "string", description: "Contact phone number" },
+                  work_authorized: {
+                    type: "string",
+                    description:
+                      "Whether candidate is US work authorized. Accept 'yes', 'no', or 'unclear'.",
+                  },
+                  years_experience: {
+                    type: "string",
+                    description: "Years of relevant experience (e.g. '3-5')",
+                  },
+                  most_recent_employer: {
+                    type: "string",
+                    description: "Candidate's most recent employer name",
+                  },
+                  certifications: {
+                    type: "array",
+                    items: { type: "string" },
+                    description:
+                      "List of certifications held (TIPS, ServSafe, OSHA, forklift, CNA, HHA, CPR, HIPAA, etc.)",
+                  },
+                  available_evenings: {
+                    type: "boolean",
+                    description: "Available to work evening shifts",
+                  },
+                  available_weekends: {
+                    type: "boolean",
+                    description: "Available to work weekend shifts",
+                  },
+                  earliest_start_date: {
+                    type: "string",
+                    description: "Earliest start date in plain language",
+                  },
+                  confirmed_physical_requirements: {
+                    type: "boolean",
+                    description:
+                      "Whether candidate confirmed they meet physical requirements",
+                  },
+                  notes: {
+                    type: "string",
+                    description:
+                      "Free-form notes for recruiter about standout moments, concerns, or follow-ups",
+                  },
+                },
+                required: ["full_name"],
+              },
+            },
+          },
+        ],
       },
       // Jordan TTS: Cartesia sonic-3 with Ross "Reliable Partner" voice.
       // voice_settings omitted so SSML speed/volume tags stay per-phrase dynamic.
@@ -269,9 +348,19 @@ function buildPersonaPayload() {
           process.env.CARTESIA_VOICE_ID_JORDAN ||
           "f24ae0b7-a3d2-4dd1-89df-959bdc4ab179",
       },
+      // Migrated off deprecated tavus-advanced per Tavus docs. tavus-auto
+      // is the current recommended engine. Turn-taking settings moved into
+      // the new conversational_flow layer below.
       stt: {
-        stt_engine: "tavus-advanced",
-        smart_turn_detection: true,
+        stt_engine: "tavus-auto",
+      },
+      // NEW Tavus 2026 layer. Turn-taking and interruption control live
+      // here, not in STT. 'high' patience is Tavus's recommended setting
+      // for interview personas where candidates need thinking time.
+      conversational_flow: {
+        turn_detection_model: "sparrow-1",
+        turn_taking_patience: "high",
+        replica_interruptibility: "medium",
       },
       perception: JORDAN_PERCEPTION,
     },
