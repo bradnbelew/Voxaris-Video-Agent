@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "voxaris-videoagent-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "public", "-p", "4321", "-c-1", "--silent"],
+      "port": 4321
+    }
+  ]
+}

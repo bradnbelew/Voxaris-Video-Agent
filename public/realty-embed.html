@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="theme-color" content="#08090a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Aria — Virtual Showing</title>
+
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <script src="https://unpkg.com/@daily-co/daily-js"></script>
+
+    <style>
+      /* ──────────────────────────────────────────────────────────────
+         Design system inspired by Linear.app
+         (getdesign.md/linear.app) — near-black canvas, Inter Variable
+         with cv01/ss03 features, weight 510 workhorse, indigo-violet
+         as the single chromatic accent, semi-transparent white borders,
+         luminance-stepped surfaces, no dark-on-dark drop shadows.
+         ────────────────────────────────────────────────────────────── */
+      :root {
+        /* Background surfaces — luminance stepping */
+        --bg-0: #010102;                 /* deepest canvas */
+        --bg-1: #08090a;                 /* marketing black */
+        --bg-2: #0f1011;                 /* panel dark */
+        --bg-3: #191a1b;                 /* elevated surface */
+
+        /* Text */
+        --text-primary: #f7f8f8;
+        --text-secondary: #d0d6e0;
+        --text-muted: #8a8f98;
+        --text-subtle: #62666d;
+
+        /* Accent (only chromatic color in the system) */
+        --accent: #5e6ad2;
+        --accent-bright: #7170ff;
+        --accent-hover: #828fff;
+        --accent-glow: rgba(113, 112, 255, 0.18);
+
+        /* Borders (semi-transparent white) */
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.12);
+
+        /* Surface tints (never solid — luminance stepping) */
+        --surface-1: rgba(255, 255, 255, 0.02);
+        --surface-2: rgba(255, 255, 255, 0.04);
+        --surface-3: rgba(255, 255, 255, 0.06);
+
+        --vh: 100vh;
+      }
+      @supports (height: 100dvh) {
+        :root { --vh: 100dvh; }
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--bg-1);
+        color: var(--text-primary);
+        font-family: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
+          "SF Pro Display", system-ui, sans-serif;
+        font-feature-settings: "cv01", "ss03";
+        font-variation-settings: "opsz" 32;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow: hidden;
+      }
+
+      /* ──────────────────────────────────────────────────────────────
+         Layout
+         ────────────────────────────────────────────────────────────── */
+      #app {
+        position: fixed;
+        inset: 0;
+        height: var(--vh);
+        display: grid;
+        grid-template-columns: 60fr 40fr;
+        background: var(--bg-1);
+      }
+
+      /* ── Left: video column ── */
+      #video-col {
+        position: relative;
+        background: var(--bg-0);
+        overflow: hidden;
+        min-width: 0;
+      }
+      #aria-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: var(--bg-0);
+        opacity: 0;
+        transition: opacity 500ms ease;
+      }
+      #aria-video.live { opacity: 1; }
+      #aria-audio {
+        position: absolute;
+        width: 0;
+        height: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ── Live indicator pill ── */
+      #live-indicator {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: none;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 12px 7px 10px;
+        border-radius: 9999px;
+        background: var(--surface-2);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        font-size: 11px;
+        font-weight: 510;
+        letter-spacing: 0.08em;
+        color: var(--text-primary);
+        z-index: 2;
+      }
+      #live-indicator.visible { display: inline-flex; }
+      #live-indicator .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff4757;
+        box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* ── Start-tour overlay ── */
+      #start-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--bg-1);
+        z-index: 6;
+        transition: opacity 400ms ease;
+      }
+      /* Subtle centered radial glow behind the card */
+      #start-overlay::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 60% 40% at 50% 45%, rgba(94, 106, 210, 0.09), transparent 70%);
+        pointer-events: none;
+      }
+      #start-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .start-card {
+        position: relative;
+        max-width: 380px;
+        width: auto;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      .start-badge {
+        display: inline-block;
+        padding: 5px 11px 5px 10px;
+        border-radius: 9999px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 10px;
+        font-weight: 510;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      #start-title {
+        font-size: 32px;
+        line-height: 1.05;
+        margin: 0;
+        font-weight: 510;
+        letter-spacing: -0.704px;
+        color: var(--text-primary);
+      }
+      #start-address {
+        font-size: 14px;
+        font-weight: 400;
+        color: var(--text-muted);
+        margin: 0;
+        max-width: 320px;
+        line-height: 1.5;
+        letter-spacing: -0.154px;
+      }
+      #start-btn {
+        margin-top: 6px;
+        padding: 11px 22px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 510;
+        font-feature-settings: "cv01", "ss03";
+        letter-spacing: -0.154px;
+        color: #ffffff;
+        background: var(--accent);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 120ms ease;
+        -webkit-appearance: none;
+        min-width: 200px;
+      }
+      #start-btn:hover { background: var(--accent-hover); }
+      #start-btn:active { transform: translateY(0.5px); }
+      #start-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      #start-hint {
+        font-size: 11px;
+        color: var(--text-subtle);
+        margin: 0;
+        font-weight: 400;
+        letter-spacing: -0.121px;
+      }
+      #start-spinner {
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(255, 255, 255, 0.12);
+        border-top-color: var(--accent-bright);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+      }
+      #start-spinner.visible { display: block; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ── Error state ── */
+      #errorState {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 14px;
+        padding: 28px;
+        text-align: center;
+        background: var(--bg-1);
+        z-index: 7;
+      }
+      #errorState.visible { display: flex; }
+      #errorState h1 {
+        color: var(--text-primary);
+        font-size: 20px;
+        margin: 0;
+        font-weight: 510;
+        letter-spacing: -0.44px;
+      }
+      #errorState p {
+        color: var(--text-muted);
+        font-size: 13px;
+        max-width: 380px;
+        margin: 0;
+        line-height: 1.5;
+      }
+      #errorState button {
+        margin-top: 6px;
+        padding: 10px 20px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 510;
+        color: var(--text-primary);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      #errorState button:hover { background: var(--surface-3); }
+
+      /* ──────────────────────────────────────────────────────────────
+         Right: photo panel
+         ────────────────────────────────────────────────────────────── */
+      #photo-col {
+        position: relative;
+        background: var(--bg-2);
+        border-left: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
+        padding: 22px 22px 20px;
+        gap: 16px;
+        opacity: 0;
+        transform: translateX(6px);
+        transition: opacity 500ms ease, transform 500ms ease;
+        min-height: 0;
+        min-width: 0;
+      }
+      #photo-col.visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      #photo-header {
+        flex-shrink: 0;
+      }
+      #property-label {
+        font-size: 10px;
+        font-weight: 510;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-subtle);
+        margin-bottom: 5px;
+      }
+      #property-address {
+        font-size: 15px;
+        font-weight: 510;
+        color: var(--text-primary);
+        line-height: 1.35;
+        letter-spacing: -0.165px;
+        word-break: break-word;
+      }
+
+      #photo-wrap {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--bg-0);
+        border: 1px solid var(--border);
+      }
+      #hero-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 500ms ease;
+      }
+      #hero-photo.loaded { opacity: 1; }
+
+      #room-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(8, 9, 10, 0.72);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: var(--text-primary);
+        padding: 6px 11px 6px 9px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 510;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        opacity: 0;
+        transform: translateY(-3px);
+        transition: opacity 280ms ease, transform 280ms ease;
+      }
+      #room-badge.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #room-badge .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent-bright);
+        box-shadow: 0 0 7px rgba(113, 112, 255, 0.6);
+      }
+
+      /* ── Thumbnail scroll ── */
+      #thumb-scroll {
+        position: relative;
+        flex-shrink: 0;
+        margin: 0 -22px;
+        padding: 0 22px;
+        overflow: hidden;
+      }
+      #thumb-strip {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 1px 0 3px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      #thumb-strip::-webkit-scrollbar { display: none; }
+
+      .thumb {
+        flex: 0 0 auto;
+        width: 94px;
+        height: 70px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        border: 1px solid var(--border-subtle);
+        transition: border-color 160ms ease, transform 160ms ease;
+        background: var(--bg-3);
+      }
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .thumb:hover {
+        border-color: var(--border-strong);
+        transform: translateY(-1px);
+      }
+      .thumb.active {
+        border-color: var(--accent-bright);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+      .thumb .thumb-label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 4px 6px;
+        font-size: 9px;
+        font-weight: 510;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.82), transparent);
+        color: var(--text-primary);
+        text-align: left;
+        line-height: 1.1;
+      }
+
+      /* ──────────────────────────────────────────────────────────────
+         Mobile
+         ────────────────────────────────────────────────────────────── */
+      @media (max-width: 880px) {
+        #app {
+          grid-template-columns: 1fr;
+          grid-template-rows: 58dvh 42dvh;
+        }
+        @supports not (height: 100dvh) {
+          #app { grid-template-rows: 58vh 42vh; }
+        }
+        #photo-col {
+          border-left: 0;
+          border-top: 1px solid var(--border-subtle);
+          padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+          gap: 12px;
+        }
+        #photo-col::before {
+          /* subtle top handle line */
+          content: "";
+          position: absolute;
+          top: 7px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 36px;
+          height: 3px;
+          background: var(--border);
+          border-radius: 999px;
+        }
+        #photo-header { padding-top: 8px; }
+        #property-address { font-size: 14px; }
+        #photo-wrap { border-radius: 10px; }
+        #start-overlay { padding: 20px; }
+        .start-card { max-width: 100%; gap: 14px; }
+        #start-title { font-size: 26px; letter-spacing: -0.572px; }
+        #start-address { font-size: 13px; }
+        #start-btn { padding: 12px 22px; font-size: 14px; min-width: 0; width: 100%; max-width: 260px; }
+        .thumb { width: 82px; height: 62px; border-radius: 7px; }
+        #thumb-scroll {
+          margin: 0 -16px;
+          padding: 0 16px;
+        }
+        #live-indicator { top: 14px; left: 14px; padding: 6px 10px 6px 9px; font-size: 10px; }
+        #room-badge { top: 10px; left: 10px; font-size: 9px; }
+      }
+      @media (max-width: 440px) {
+        .thumb { width: 74px; height: 56px; }
+        .thumb .thumb-label { font-size: 8px; padding: 3px 5px; }
+        #start-title { font-size: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- ── Left: video column ── -->
+      <div id="video-col">
+        <video id="aria-video" playsinline autoplay muted></video>
+        <audio id="aria-audio" autoplay></audio>
+
+        <div id="live-indicator"><span class="dot"></span>LIVE</div>
+
+        <div id="start-overlay">
+          <div class="start-card">
+            <div class="start-badge">Virtual Tour</div>
+            <h1 id="start-title">Ready to tour this home?</h1>
+            <p id="start-address">Loading listing…</p>
+            <button id="start-btn" type="button">
+              <span id="start-btn-label">Start virtual tour</span>
+            </button>
+            <div id="start-spinner"></div>
+            <p id="start-hint">Camera and microphone required</p>
+          </div>
+        </div>
+
+        <div id="errorState">
+          <h1>Couldn't start the tour</h1>
+          <p id="errorMsg">Please try again.</p>
+          <button type="button" onclick="location.reload()">Try again</button>
+        </div>
+      </div>
+
+      <!-- ── Right: photo panel ── -->
+      <div id="photo-col">
+        <div id="photo-header">
+          <div id="property-label">Now Showing</div>
+          <div id="property-address">Loading listing…</div>
+        </div>
+        <div id="photo-wrap">
+          <img id="hero-photo" alt="" />
+          <div id="room-badge"><span class="dot"></span><span id="room-name">Exterior</span></div>
+        </div>
+        <div id="thumb-scroll">
+          <div id="thumb-strip"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ──────────────────────────────────────────────────────────────
+      //  State
+      // ──────────────────────────────────────────────────────────────
+      const qs = new URLSearchParams(location.search);
+      const params = {
+        visitor_name: qs.get("visitor_name") || qs.get("name") || "there",
+        listing_id: qs.get("listing_id") || "1005192",
+        source: qs.get("source") || "embed",
+        brokerage_name: qs.get("agency") || "our brokerage",
+      };
+
+      let photoMap = null;
+      let conversationId = null;
+      let conversationUrl = null;
+      let callObject = null;
+      let currentRoom = null;
+
+      const ROOM_LABELS = {
+        hero: "Hero",
+        exterior: "Exterior",
+        kitchen: "Kitchen",
+        living_room: "Living Room",
+        primary_bedroom: "Primary Bedroom",
+        bathroom: "Bathroom",
+      };
+
+      // Ordered longest-phrase-first so "living room" beats bare "living"
+      // and "primary bedroom" beats bare "bedroom" when both appear.
+      const ROOM_KEYWORDS = [
+        { keys: ["all photos", "gallery", "show me more", "more photos"], room: "hero" },
+        { keys: ["living room", "living area", "family room"], room: "living_room" },
+        { keys: ["primary bedroom", "primary suite", "master bedroom", "master suite"], room: "primary_bedroom" },
+        { keys: ["bedroom", "master", "primary"], room: "primary_bedroom" },
+        { keys: ["bathroom", "bath", "shower"], room: "bathroom" },
+        { keys: ["kitchen", "cook"], room: "kitchen" },
+        { keys: ["outside", "exterior", "yard", "front of the house", "back of the house", "curb"], room: "exterior" },
+      ];
+
+      const el = (id) => document.getElementById(id);
+
+      function showError(msg) {
+        el("errorMsg").textContent = msg || "Unknown error";
+        el("start-overlay").classList.add("hidden");
+        el("errorState").classList.add("visible");
+      }
+
+      function hideStartOverlay() {
+        el("start-overlay").classList.add("hidden");
+        el("live-indicator").classList.add("visible");
+      }
+
+      function setStartAddress(text) {
+        const node = el("start-address");
+        if (node) node.textContent = text || "";
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Photo panel rendering
+      // ──────────────────────────────────────────────────────────────
+      function renderThumbnails() {
+        const strip = el("thumb-strip");
+        strip.innerHTML = "";
+        if (!photoMap) return;
+        const order = ["hero", "exterior", "kitchen", "living_room", "primary_bedroom", "bathroom"];
+        order.forEach((key) => {
+          const url = photoMap[key];
+          if (!url) return;
+          const thumb = document.createElement("div");
+          thumb.className = "thumb";
+          thumb.dataset.room = key;
+          thumb.innerHTML =
+            '<img src="' + url + '" alt="' + ROOM_LABELS[key] + '" />' +
+            '<div class="thumb-label">' + ROOM_LABELS[key] + "</div>";
+          thumb.addEventListener("click", () => showRoom(key, true));
+          strip.appendChild(thumb);
+        });
+      }
+
+      function showRoom(roomKey, manual) {
+        if (!photoMap || !photoMap[roomKey]) return;
+        if (currentRoom === roomKey) return;
+
+        const url = photoMap[roomKey];
+        const img = el("hero-photo");
+        img.classList.remove("loaded");
+        const tmp = new Image();
+        tmp.onload = () => {
+          img.src = url;
+          img.classList.add("loaded");
+        };
+        tmp.onerror = () => console.warn("photo failed to load:", url);
+        tmp.src = url;
+
+        el("room-name").textContent = ROOM_LABELS[roomKey] || roomKey;
+        el("room-badge").classList.add("visible");
+        currentRoom = roomKey;
+
+        document.querySelectorAll(".thumb").forEach((t) => {
+          t.classList.toggle("active", t.dataset.room === roomKey);
+        });
+
+        sendContextUpdate(roomKey, url);
+      }
+
+      function sendContextUpdate(roomKey, url) {
+        if (!callObject || !conversationId) return;
+        const roomName = ROOM_LABELS[roomKey] || roomKey;
+        const context =
+          "VIRTUAL TOUR — ROOM VIEW CHANGE\n" +
+          "The buyer is now viewing: " + roomName + "\n" +
+          "Photo URL: " + url + "\n" +
+          "Describe this room naturally as if you can see it. Reference specific details visible in the photo. Keep your response to 2-3 sentences then invite a question.";
+        try {
+          callObject.sendAppMessage(
+            {
+              message_type: "conversation",
+              event_type: "conversation.overwrite_llm_context",
+              conversation_id: conversationId,
+              properties: { context: context },
+            },
+            "*"
+          );
+        } catch (e) {
+          console.warn("[daily] sendAppMessage failed:", e && e.message);
+        }
+      }
+
+      function scanTranscriptForRoom(text) {
+        if (!text) return null;
+        const lower = text.toLowerCase();
+        for (const entry of ROOM_KEYWORDS) {
+          for (const key of entry.keys) {
+            if (lower.includes(key)) return entry.room;
+          }
+        }
+        return null;
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Daily call object (headless) — renders tracks ourselves so
+      //  we never show the Daily pre-join UI and have full layout control.
+      // ──────────────────────────────────────────────────────────────
+      function attachRemoteTracks(participant) {
+        if (!participant || participant.local) return;
+        const videoEl = el("aria-video");
+        const audioEl = el("aria-audio");
+
+        const videoTrack = participant.tracks && participant.tracks.video;
+        if (videoTrack && videoTrack.persistentTrack) {
+          const stream = new MediaStream([videoTrack.persistentTrack]);
+          if (videoEl.srcObject !== stream) {
+            videoEl.srcObject = stream;
+            videoEl.play().catch((e) => console.warn("[daily] video play:", e.message));
+            videoEl.classList.add("live");
+          }
+        }
+
+        const audioTrack = participant.tracks && participant.tracks.audio;
+        if (audioTrack && audioTrack.persistentTrack) {
+          const stream = new MediaStream([audioTrack.persistentTrack]);
+          if (audioEl.srcObject !== stream) {
+            audioEl.srcObject = stream;
+            audioEl.play().catch((e) => console.warn("[daily] audio play:", e.message));
+          }
+        }
+      }
+
+      async function startTour() {
+        const btn = el("start-btn");
+        const label = el("start-btn-label");
+        const spinner = el("start-spinner");
+        btn.disabled = true;
+        label.textContent = "Connecting…";
+        spinner.classList.add("visible");
+
+        try {
+          if (typeof window.DailyIframe === "undefined") {
+            throw new Error("Daily.js failed to load");
+          }
+
+          callObject = window.DailyIframe.createCallObject({
+            audioSource: true,
+            videoSource: true,
+            subscribeToTracksAutomatically: true,
+          });
+          window.__dailyCall = callObject;
+
+          callObject
+            .on("joined-meeting", () => {
+              hideStartOverlay();
+              const parts = callObject.participants();
+              Object.values(parts).forEach((p) => {
+                if (!p.local) attachRemoteTracks(p);
+              });
+            })
+            .on("participant-joined", (evt) => attachRemoteTracks(evt.participant))
+            .on("participant-updated", (evt) => attachRemoteTracks(evt.participant))
+            .on("track-started", (evt) => attachRemoteTracks(evt.participant))
+            .on("left-meeting", () => {
+              el("aria-video").classList.remove("live");
+              el("live-indicator").classList.remove("visible");
+            })
+            .on("error", (e) => {
+              console.error("[daily] error:", e);
+              showError((e && e.errorMsg) || "Call error");
+            })
+            .on("transcription-message", (evt) => {
+              try {
+                if (!evt || !evt.is_final) return;
+                const local = callObject.participants().local;
+                if (!local) return;
+                if (evt.participantId && evt.participantId !== local.session_id) return;
+                const room = scanTranscriptForRoom(evt.text || "");
+                if (room) showRoom(room, false);
+              } catch (e) {
+                console.warn("[daily] transcription handler:", e && e.message);
+              }
+            })
+            .on("app-message", (evt) => {
+              try {
+                const data = (evt && evt.data) || {};
+                const text = data.text || data.transcript || data.user_text || "";
+                if (text) {
+                  const room = scanTranscriptForRoom(text);
+                  if (room) showRoom(room, false);
+                }
+              } catch (_) {}
+            });
+
+          await callObject.join({
+            url: conversationUrl,
+            userName: params.visitor_name,
+            startVideoOff: false,
+            startAudioOff: false,
+          });
+
+          // Unmute video after user gesture has fired
+          setTimeout(() => {
+            const v = el("aria-video");
+            v.muted = false;
+            v.play().catch(() => {});
+          }, 400);
+        } catch (e) {
+          console.error("[start] failed:", e);
+          showError((e && e.message) || "Could not start the tour");
+          btn.disabled = false;
+          label.textContent = "Start virtual tour";
+          spinner.classList.remove("visible");
+        }
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Boot
+      // ──────────────────────────────────────────────────────────────
+      async function boot() {
+        try {
+          const r = await fetch("/api/realty/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params),
+          });
+          const data = await r.json();
+          if (!r.ok || !data.conversation_url) {
+            throw new Error(data.error || "Failed to start conversation");
+          }
+
+          conversationId = data.conversation_id;
+          conversationUrl = data.conversation_url;
+          photoMap = data.photo_map || { all: [] };
+
+          const addr = data.listing_address || "Virtual Tour";
+          el("property-address").textContent = addr;
+          setStartAddress(addr);
+
+          renderThumbnails();
+          el("photo-col").classList.add("visible");
+
+          const initialRoom =
+            (photoMap.hero && "hero") ||
+            (photoMap.exterior && "exterior") ||
+            Object.keys(photoMap).find((k) => k !== "all" && photoMap[k]);
+          if (initialRoom) showRoom(initialRoom, false);
+
+          el("start-btn").addEventListener("click", startTour);
+        } catch (e) {
+          console.error("[boot]", e);
+          showError(e.message);
+        }
+      }
+
+      boot();
+    </script>
+  </body>
+</html>

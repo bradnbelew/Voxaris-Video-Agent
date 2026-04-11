@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voxaris VideoAgent</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 48px 24px;
+        background: #0a0a0a;
+        color: #f5f5f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .wrap { max-width: 640px; text-align: center; }
+      h1 {
+        font-size: 36px;
+        margin: 0 0 12px;
+        letter-spacing: -0.02em;
+      }
+      p { color: #9ca3af; margin: 0 0 32px; font-size: 16px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      a {
+        display: block;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        text-decoration: none;
+        color: #f5f5f5;
+        transition: all 0.15s ease;
+      }
+      a:hover { transform: translateY(-2px); }
+      a.realty:hover { border-color: rgba(46, 204, 113, 0.5); }
+      a.staffing:hover { border-color: rgba(52, 152, 219, 0.5); }
+      h2 { font-size: 18px; margin: 0 0 6px; }
+      small { color: #6b7280; font-size: 12px; }
+      @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Voxaris VideoAgent</h1>
+      <p>Dual-vertical Tavus CVI platform — Real Estate showings + Staffing screening interviews.</p>
+      <div class="grid">
+        <a class="realty" href="/realty?visitor_name=Demo+Buyer&listing_id=1005192">
+          <h2>🏠 Aria — Virtual Showing</h2>
+          <small>Phoenix-4 replica, Raven-1 perception, interactive photo tour</small>
+        </a>
+        <a class="staffing" href="/staffing?candidate_name=Demo+Candidate&role=hospitality">
+          <h2>💼 Jordan — Screening Interview</h2>
+          <small>EEOC-compliant pre-screening with live progress stepper</small>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

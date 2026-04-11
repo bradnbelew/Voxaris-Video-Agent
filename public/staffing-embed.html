@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="theme-color" content="#08090a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Jordan — Pre-Screening Interview</title>
+
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <script src="https://unpkg.com/@daily-co/daily-js"></script>
+
+    <style>
+      /* ──────────────────────────────────────────────────────────────
+         Linear design system — near-black canvas, Inter Variable with
+         cv01/ss03 features, weight 510 workhorse, indigo-violet as the
+         single chromatic accent, semi-transparent white borders.
+         ────────────────────────────────────────────────────────────── */
+      :root {
+        --bg-0: #010102;
+        --bg-1: #08090a;
+        --bg-2: #0f1011;
+        --bg-3: #191a1b;
+
+        --text-primary: #f7f8f8;
+        --text-secondary: #d0d6e0;
+        --text-muted: #8a8f98;
+        --text-subtle: #62666d;
+
+        --accent: #5e6ad2;
+        --accent-bright: #7170ff;
+        --accent-hover: #828fff;
+        --accent-glow: rgba(113, 112, 255, 0.18);
+
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.12);
+
+        --surface-1: rgba(255, 255, 255, 0.02);
+        --surface-2: rgba(255, 255, 255, 0.04);
+        --surface-3: rgba(255, 255, 255, 0.06);
+
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+
+        --vh: 100vh;
+      }
+      @supports (height: 100dvh) {
+        :root { --vh: 100dvh; }
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--bg-1);
+        color: var(--text-primary);
+        font-family: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
+          "SF Pro Display", system-ui, sans-serif;
+        font-feature-settings: "cv01", "ss03";
+        font-variation-settings: "opsz" 32;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow: hidden;
+      }
+
+      /* ──────────────────────────────────────────────────────────────
+         Layout
+         ────────────────────────────────────────────────────────────── */
+      #app {
+        position: fixed;
+        inset: 0;
+        height: var(--vh);
+        display: grid;
+        grid-template-columns: 60fr 40fr;
+        background: var(--bg-1);
+      }
+
+      /* ── Left: video column ── */
+      #video-col {
+        position: relative;
+        background: var(--bg-0);
+        overflow: hidden;
+        min-width: 0;
+      }
+      #jordan-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: var(--bg-0);
+        opacity: 0;
+        transition: opacity 500ms ease;
+      }
+      #jordan-video.live { opacity: 1; }
+      #jordan-audio {
+        position: absolute;
+        width: 0;
+        height: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #live-indicator {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: none;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 12px 7px 10px;
+        border-radius: 9999px;
+        background: var(--surface-2);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        font-size: 11px;
+        font-weight: 510;
+        letter-spacing: 0.08em;
+        color: var(--text-primary);
+        z-index: 2;
+      }
+      #live-indicator.visible { display: inline-flex; }
+      #live-indicator .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff4757;
+        box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* ── Start interview overlay ── */
+      #start-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--bg-1);
+        z-index: 6;
+        transition: opacity 400ms ease;
+      }
+      #start-overlay::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse 60% 40% at 50% 45%,
+          rgba(94, 106, 210, 0.09),
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+      #start-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .start-card {
+        position: relative;
+        max-width: 420px;
+        width: auto;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      .start-badge {
+        display: inline-block;
+        padding: 5px 11px 5px 10px;
+        border-radius: 9999px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 10px;
+        font-weight: 510;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      #start-title {
+        font-size: 32px;
+        line-height: 1.05;
+        margin: 0;
+        font-weight: 510;
+        letter-spacing: -0.704px;
+        color: var(--text-primary);
+      }
+      #start-subtitle {
+        font-size: 14px;
+        font-weight: 400;
+        color: var(--text-muted);
+        margin: 0;
+        max-width: 340px;
+        line-height: 1.5;
+        letter-spacing: -0.154px;
+      }
+      #start-duration {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--text-subtle);
+        letter-spacing: 0.02em;
+      }
+      #start-duration::before {
+        content: "";
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent-bright);
+        box-shadow: 0 0 6px var(--accent-glow);
+      }
+      #start-btn {
+        margin-top: 4px;
+        padding: 11px 22px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 510;
+        font-feature-settings: "cv01", "ss03";
+        letter-spacing: -0.154px;
+        color: #ffffff;
+        background: var(--accent);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 120ms ease;
+        -webkit-appearance: none;
+        min-width: 220px;
+      }
+      #start-btn:hover { background: var(--accent-hover); }
+      #start-btn:active { transform: translateY(0.5px); }
+      #start-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+      #start-hint {
+        font-size: 11px;
+        color: var(--text-subtle);
+        margin: 0;
+        font-weight: 400;
+      }
+      #start-spinner {
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(255, 255, 255, 0.12);
+        border-top-color: var(--accent-bright);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+      }
+      #start-spinner.visible { display: block; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      #errorState {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 14px;
+        padding: 28px;
+        text-align: center;
+        background: var(--bg-1);
+        z-index: 7;
+      }
+      #errorState.visible { display: flex; }
+      #errorState h1 {
+        color: var(--text-primary);
+        font-size: 20px;
+        margin: 0;
+        font-weight: 510;
+        letter-spacing: -0.44px;
+      }
+      #errorState p {
+        color: var(--text-muted);
+        font-size: 13px;
+        max-width: 380px;
+        margin: 0;
+        line-height: 1.5;
+      }
+      #errorState button {
+        margin-top: 6px;
+        padding: 10px 20px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 510;
+        color: var(--text-primary);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      /* ──────────────────────────────────────────────────────────────
+         Right: interview panel
+         ────────────────────────────────────────────────────────────── */
+      #panel {
+        position: relative;
+        background: var(--bg-2);
+        border-left: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
+        padding: 24px 22px 22px;
+        gap: 20px;
+        overflow-y: auto;
+        opacity: 0;
+        transform: translateX(6px);
+        transition: opacity 500ms ease, transform 500ms ease;
+        min-height: 0;
+        min-width: 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+      }
+      #panel::-webkit-scrollbar { width: 6px; }
+      #panel::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 3px;
+      }
+      #panel.visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .panel-label {
+        font-size: 10px;
+        font-weight: 510;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-subtle);
+        margin-bottom: 6px;
+      }
+
+      /* Role header */
+      #role-header {
+        flex-shrink: 0;
+      }
+      #role-title {
+        font-size: 20px;
+        font-weight: 510;
+        color: var(--text-primary);
+        line-height: 1.25;
+        letter-spacing: -0.3px;
+        margin: 0;
+      }
+      #candidate-line {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 6px;
+        letter-spacing: -0.143px;
+      }
+
+      /* Role meta card */
+      .card {
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 16px 14px;
+        flex-shrink: 0;
+      }
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 12px;
+      }
+      .meta-row:last-child { border-bottom: 0; padding-bottom: 0; }
+      .meta-row:first-child { padding-top: 0; }
+      .meta-key {
+        color: var(--text-subtle);
+        font-weight: 510;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+      .meta-val {
+        color: var(--text-secondary);
+        font-weight: 400;
+        letter-spacing: -0.132px;
+        text-align: right;
+        line-height: 1.4;
+      }
+
+      /* Requirements list */
+      #requirements {
+        flex-shrink: 0;
+      }
+      #requirements ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      #requirements li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.45;
+        letter-spacing: -0.132px;
+      }
+      #requirements li::before {
+        content: "";
+        flex-shrink: 0;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--text-subtle);
+        margin-top: 7px;
+      }
+
+      /* Interview progress stepper */
+      #progress {
+        flex-shrink: 0;
+      }
+      #stepper {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 0;
+        position: relative;
+        font-size: 12.5px;
+        color: var(--text-subtle);
+        letter-spacing: -0.138px;
+        transition: color 240ms ease;
+      }
+      .step::before {
+        content: "";
+        position: absolute;
+        left: 7px;
+        top: 20px;
+        bottom: -2px;
+        width: 1px;
+        background: var(--border);
+      }
+      .step:last-child::before { display: none; }
+
+      .step-dot {
+        flex-shrink: 0;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1.5px solid var(--border);
+        background: var(--bg-2);
+        position: relative;
+        z-index: 1;
+        transition: border-color 240ms ease, background 240ms ease;
+      }
+      .step.done {
+        color: var(--text-secondary);
+      }
+      .step.done .step-dot {
+        border-color: var(--accent-bright);
+        background: var(--accent-bright);
+      }
+      .step.done .step-dot::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 4px;
+        width: 4px;
+        height: 7px;
+        border: solid var(--bg-1);
+        border-width: 0 1.5px 1.5px 0;
+        transform: rotate(45deg);
+      }
+      .step.current {
+        color: var(--text-primary);
+        font-weight: 510;
+      }
+      .step.current .step-dot {
+        border-color: var(--accent-bright);
+        background: var(--bg-1);
+      }
+      .step.current .step-dot::after {
+        content: "";
+        position: absolute;
+        inset: 2px;
+        border-radius: 50%;
+        background: var(--accent-bright);
+        animation: pulse-dot 1.6s ease-in-out infinite;
+      }
+      @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.55; transform: scale(0.7); }
+      }
+
+      .step.disqualified .step-dot {
+        border-color: var(--danger);
+        background: var(--danger);
+      }
+      .step.disqualified {
+        color: var(--text-secondary);
+      }
+
+      /* Terminal banner */
+      #terminal-banner {
+        display: none;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 12.5px;
+        font-weight: 510;
+        letter-spacing: -0.138px;
+        line-height: 1.45;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--text-primary);
+        flex-shrink: 0;
+      }
+      #terminal-banner.visible { display: block; }
+      #terminal-banner.success {
+        border-color: rgba(16, 185, 129, 0.35);
+        background: rgba(16, 185, 129, 0.08);
+        color: #6ee7b7;
+      }
+      #terminal-banner.declined {
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.08);
+        color: #fca5a5;
+      }
+
+      /* ──────────────────────────────────────────────────────────────
+         Mobile
+         ────────────────────────────────────────────────────────────── */
+      @media (max-width: 880px) {
+        #app {
+          grid-template-columns: 1fr;
+          grid-template-rows: 54dvh 46dvh;
+        }
+        @supports not (height: 100dvh) {
+          #app { grid-template-rows: 54vh 46vh; }
+        }
+        #panel {
+          border-left: 0;
+          border-top: 1px solid var(--border-subtle);
+          padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+          gap: 16px;
+        }
+        #panel::before {
+          content: "";
+          position: absolute;
+          top: 7px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 36px;
+          height: 3px;
+          background: var(--border);
+          border-radius: 999px;
+        }
+        #role-header { padding-top: 10px; }
+        #role-title { font-size: 17px; }
+        #candidate-line { font-size: 12px; }
+        .card { padding: 14px; border-radius: 10px; }
+        #start-overlay { padding: 20px; }
+        .start-card { max-width: 100%; gap: 14px; }
+        #start-title { font-size: 26px; letter-spacing: -0.572px; }
+        #start-subtitle { font-size: 13px; }
+        #start-btn { padding: 12px 22px; font-size: 14px; min-width: 0; width: 100%; max-width: 280px; }
+        #live-indicator { top: 14px; left: 14px; padding: 6px 10px 6px 9px; font-size: 10px; }
+        .step { font-size: 12px; padding: 8px 0; }
+      }
+      @media (max-width: 440px) {
+        #start-title { font-size: 24px; }
+        .meta-row { font-size: 11.5px; }
+        .meta-key { font-size: 9.5px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- ── Left: video column ── -->
+      <div id="video-col">
+        <video id="jordan-video" playsinline autoplay muted></video>
+        <audio id="jordan-audio" autoplay></audio>
+
+        <div id="live-indicator"><span class="dot"></span>LIVE</div>
+
+        <div id="start-overlay">
+          <div class="start-card">
+            <div class="start-badge">Screening Interview</div>
+            <h1 id="start-title">Ready for your interview?</h1>
+            <p id="start-subtitle">Jordan will walk you through a quick pre-screening interview for this role.</p>
+            <div id="start-duration">Takes about 10 minutes</div>
+            <button id="start-btn" type="button">
+              <span id="start-btn-label">Start interview</span>
+            </button>
+            <div id="start-spinner"></div>
+            <p id="start-hint">Camera and microphone required</p>
+          </div>
+        </div>
+
+        <div id="errorState">
+          <h1>Couldn't start the interview</h1>
+          <p id="errorMsg">Please try again.</p>
+          <button type="button" onclick="location.reload()">Try again</button>
+        </div>
+      </div>
+
+      <!-- ── Right: interview panel ── -->
+      <div id="panel">
+        <div id="role-header">
+          <div class="panel-label">Now Interviewing</div>
+          <h2 id="role-title">Loading role…</h2>
+          <div id="candidate-line"></div>
+        </div>
+
+        <div id="role-meta" class="card">
+          <div class="meta-row"><span class="meta-key">Venue</span><span class="meta-val" id="meta-venue">—</span></div>
+          <div class="meta-row"><span class="meta-key">Pay</span><span class="meta-val" id="meta-pay">—</span></div>
+          <div class="meta-row"><span class="meta-key">Shift</span><span class="meta-val" id="meta-shift">—</span></div>
+        </div>
+
+        <div id="requirements">
+          <div class="panel-label">Requirements</div>
+          <ul id="requirements-list"></ul>
+        </div>
+
+        <div id="progress">
+          <div class="panel-label">Interview Progress</div>
+          <div id="stepper"></div>
+        </div>
+
+        <div id="terminal-banner"></div>
+      </div>
+    </div>
+
+    <script>
+      // ──────────────────────────────────────────────────────────────
+      //  State
+      // ──────────────────────────────────────────────────────────────
+      const qs = new URLSearchParams(location.search);
+      const params = {
+        candidate_name: qs.get("candidate_name") || qs.get("name") || "there",
+        role: qs.get("role") || "hospitality",
+        agency_name: qs.get("agency") || "our staffing team",
+      };
+
+      let conversationId = null;
+      let conversationUrl = null;
+      let callObject = null;
+      let pollTimer = null;
+      let completedSet = new Set();
+      let disqualified = false;
+      let terminated = false;
+
+      // Stepper definition — 9 meaningful stages.
+      const STEPS = [
+        { key: "candidate_ready", label: "Ready" },
+        { key: "get_candidate_info", label: "Contact info" },
+        { key: "work_authorization", label: "Work authorization" },
+        { key: "get_experience", label: "Experience" },
+        { key: "get_certifications", label: "Certifications" },
+        { key: "get_availability", label: "Availability" },
+        { key: "physical_requirements", label: "Physical requirements" },
+        { key: "candidate_questions", label: "Your questions" },
+        { key: "closing_confirmed", label: "Interview complete" },
+      ];
+
+      const el = (id) => document.getElementById(id);
+
+      function showError(msg) {
+        el("errorMsg").textContent = msg || "Unknown error";
+        el("start-overlay").classList.add("hidden");
+        el("errorState").classList.add("visible");
+      }
+
+      function hideStartOverlay() {
+        el("start-overlay").classList.add("hidden");
+        el("live-indicator").classList.add("visible");
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Panel rendering
+      // ──────────────────────────────────────────────────────────────
+      function titleCase(s) {
+        if (!s) return "";
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }
+
+      function renderPanel(data) {
+        const rd = data.role_details || {};
+        el("role-title").textContent = rd.title || data.role || "Screening";
+        el("candidate-line").textContent =
+          "Candidate: " + titleCase(params.candidate_name);
+
+        el("meta-venue").textContent = rd.venue_type || "—";
+        el("meta-pay").textContent = rd.pay_range || "—";
+        el("meta-shift").textContent = rd.shift || "—";
+
+        const ul = el("requirements-list");
+        ul.innerHTML = "";
+        (rd.must_haves || []).forEach((req) => {
+          const li = document.createElement("li");
+          li.textContent = req;
+          ul.appendChild(li);
+        });
+
+        renderStepper();
+      }
+
+      function renderStepper() {
+        const stepper = el("stepper");
+        stepper.innerHTML = "";
+
+        // Determine current step = first not-completed
+        let currentIndex = STEPS.findIndex((s) => !completedSet.has(s.key));
+        if (currentIndex === -1) currentIndex = STEPS.length; // all done
+
+        STEPS.forEach((s, i) => {
+          const row = document.createElement("div");
+          row.className = "step";
+          if (completedSet.has(s.key)) row.classList.add("done");
+          else if (i === currentIndex && !terminated) row.classList.add("current");
+          if (disqualified && s.key === "work_authorization") {
+            row.classList.remove("done", "current");
+            row.classList.add("disqualified");
+          }
+          row.innerHTML =
+            '<span class="step-dot"></span><span>' + s.label + "</span>";
+          stepper.appendChild(row);
+        });
+      }
+
+      function showTerminalBanner(kind, text) {
+        const node = el("terminal-banner");
+        node.className = "";
+        node.classList.add("visible", kind);
+        node.textContent = text;
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Session polling — reads /api/staffing/tools?conversation_id=
+      // ──────────────────────────────────────────────────────────────
+      async function pollSession() {
+        if (!conversationId || terminated) return;
+        try {
+          const r = await fetch(
+            "/api/staffing/tools?conversation_id=" +
+              encodeURIComponent(conversationId)
+          );
+          if (!r.ok) return;
+          const data = await r.json();
+          const session = data && data.session;
+          if (!session) return;
+
+          const completed = Array.isArray(session.objectives_completed)
+            ? session.objectives_completed
+            : [];
+          completedSet = new Set(completed);
+          disqualified =
+            session.disqualified === true ||
+            session.work_authorized === false ||
+            completed.includes("end_screening_ineligible");
+
+          renderStepper();
+
+          if (session.status === "completed" || completed.includes("closing_confirmed")) {
+            terminated = true;
+            showTerminalBanner(
+              "success",
+              "Interview complete — a recruiter will be in touch within 1 business day."
+            );
+            clearInterval(pollTimer);
+          } else if (disqualified || session.status === "disqualified") {
+            terminated = true;
+            showTerminalBanner(
+              "declined",
+              "Thanks for your time. Unfortunately we can only proceed with candidates who are US-authorized to work."
+            );
+            clearInterval(pollTimer);
+          } else if (session.status === "ended") {
+            terminated = true;
+            clearInterval(pollTimer);
+          }
+        } catch (e) {
+          // transient — swallow
+        }
+      }
+
+      function startPolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(pollSession, 3000);
+        pollSession();
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Daily call object (headless)
+      // ──────────────────────────────────────────────────────────────
+      function attachRemoteTracks(participant) {
+        if (!participant || participant.local) return;
+        const videoEl = el("jordan-video");
+        const audioEl = el("jordan-audio");
+
+        const videoTrack = participant.tracks && participant.tracks.video;
+        if (videoTrack && videoTrack.persistentTrack) {
+          const stream = new MediaStream([videoTrack.persistentTrack]);
+          if (videoEl.srcObject !== stream) {
+            videoEl.srcObject = stream;
+            videoEl.play().catch((e) => console.warn("[daily] video play:", e.message));
+            videoEl.classList.add("live");
+          }
+        }
+
+        const audioTrack = participant.tracks && participant.tracks.audio;
+        if (audioTrack && audioTrack.persistentTrack) {
+          const stream = new MediaStream([audioTrack.persistentTrack]);
+          if (audioEl.srcObject !== stream) {
+            audioEl.srcObject = stream;
+            audioEl.play().catch((e) => console.warn("[daily] audio play:", e.message));
+          }
+        }
+      }
+
+      async function startInterview() {
+        const btn = el("start-btn");
+        const label = el("start-btn-label");
+        const spinner = el("start-spinner");
+        btn.disabled = true;
+        label.textContent = "Connecting…";
+        spinner.classList.add("visible");
+
+        try {
+          if (typeof window.DailyIframe === "undefined") {
+            throw new Error("Daily.js failed to load");
+          }
+
+          callObject = window.DailyIframe.createCallObject({
+            audioSource: true,
+            videoSource: true,
+            subscribeToTracksAutomatically: true,
+          });
+          window.__dailyCall = callObject;
+
+          callObject
+            .on("joined-meeting", () => {
+              hideStartOverlay();
+              const parts = callObject.participants();
+              Object.values(parts).forEach((p) => {
+                if (!p.local) attachRemoteTracks(p);
+              });
+              startPolling();
+            })
+            .on("participant-joined", (evt) => attachRemoteTracks(evt.participant))
+            .on("participant-updated", (evt) => attachRemoteTracks(evt.participant))
+            .on("track-started", (evt) => attachRemoteTracks(evt.participant))
+            .on("left-meeting", () => {
+              el("jordan-video").classList.remove("live");
+              el("live-indicator").classList.remove("visible");
+              if (pollTimer) clearInterval(pollTimer);
+            })
+            .on("error", (e) => {
+              console.error("[daily] error:", e);
+              showError((e && e.errorMsg) || "Call error");
+            });
+
+          await callObject.join({
+            url: conversationUrl,
+            userName: params.candidate_name,
+            startVideoOff: false,
+            startAudioOff: false,
+          });
+
+          setTimeout(() => {
+            const v = el("jordan-video");
+            v.muted = false;
+            v.play().catch(() => {});
+          }, 400);
+        } catch (e) {
+          console.error("[start] failed:", e);
+          showError((e && e.message) || "Could not start the interview");
+          btn.disabled = false;
+          label.textContent = "Start interview";
+          spinner.classList.remove("visible");
+        }
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      //  Boot
+      // ──────────────────────────────────────────────────────────────
+      async function boot() {
+        try {
+          const r = await fetch("/api/staffing/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params),
+          });
+          const data = await r.json();
+          if (!r.ok || !data.conversation_url) {
+            throw new Error(data.error || "Failed to start conversation");
+          }
+
+          conversationId = data.conversation_id;
+          conversationUrl = data.conversation_url;
+
+          renderPanel(data);
+          el("panel").classList.add("visible");
+
+          el("start-btn").addEventListener("click", startInterview);
+        } catch (e) {
+          console.error("[boot]", e);
+          showError(e.message);
+        }
+      }
+
+      boot();
+    </script>
+  </body>
+</html>
