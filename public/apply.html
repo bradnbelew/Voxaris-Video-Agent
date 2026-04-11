@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="theme-color" content="#08090a" />
+    <title>Apply — Voxaris</title>
+
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+    <!-- pdf.js from Mozilla CDN for client-side PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
+    <script>
+      if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+      }
+    </script>
+
+    <style>
+      /* Linear design system — same as the staffing-embed */
+      :root {
+        --bg-0: #010102;
+        --bg-1: #08090a;
+        --bg-2: #0f1011;
+        --bg-3: #191a1b;
+        --text-primary: #f7f8f8;
+        --text-secondary: #d0d6e0;
+        --text-muted: #8a8f98;
+        --text-subtle: #62666d;
+        --accent: #5e6ad2;
+        --accent-bright: #7170ff;
+        --accent-hover: #828fff;
+        --accent-glow: rgba(113, 112, 255, 0.18);
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.12);
+        --surface-1: rgba(255, 255, 255, 0.02);
+        --surface-2: rgba(255, 255, 255, 0.04);
+        --surface-3: rgba(255, 255, 255, 0.06);
+        --danger: #ef4444;
+        --success: #10b981;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background: var(--bg-1);
+        color: var(--text-primary);
+        font-family: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
+          "SF Pro Display", system-ui, sans-serif;
+        font-feature-settings: "cv01", "ss03";
+        font-variation-settings: "opsz" 32;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      body {
+        background: radial-gradient(
+            ellipse 60% 40% at 50% 20%,
+            rgba(94, 106, 210, 0.08),
+            transparent 70%
+          ),
+          var(--bg-1);
+      }
+
+      .wrap {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 40px 22px calc(60px + env(safe-area-inset-bottom));
+      }
+
+      .brand {
+        text-align: center;
+        font-size: 10px;
+        font-weight: 510;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-subtle);
+        margin-bottom: 18px;
+      }
+
+      .role-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 10px;
+        font-weight: 510;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .role-badge-wrap {
+        text-align: center;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin: 0 0 10px;
+        font-weight: 510;
+        letter-spacing: -0.704px;
+        text-align: center;
+      }
+      .subtitle {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0 0 36px;
+        letter-spacing: -0.154px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        font-weight: 510;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-subtle);
+      }
+      .field label .req {
+        color: var(--accent-bright);
+        margin-left: 3px;
+      }
+      .field input[type="text"],
+      .field input[type="email"],
+      .field input[type="tel"],
+      .field select {
+        width: 100%;
+        padding: 12px 14px;
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: -0.154px;
+        transition: border-color 160ms ease, background 160ms ease;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .field input:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--accent-bright);
+        background: var(--surface-2);
+      }
+      .field input::placeholder {
+        color: var(--text-subtle);
+      }
+      .field select {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M3 5l3 3 3-3' stroke='%238a8f98' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 34px;
+      }
+
+      /* Resume upload */
+      .resume-drop {
+        position: relative;
+        padding: 22px;
+        border: 1px dashed var(--border-strong);
+        border-radius: 10px;
+        background: var(--surface-1);
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 200ms ease, background 200ms ease;
+      }
+      .resume-drop:hover {
+        border-color: var(--accent-bright);
+        background: var(--surface-2);
+      }
+      .resume-drop.filled {
+        border-style: solid;
+        border-color: var(--accent-bright);
+        background: rgba(113, 112, 255, 0.06);
+      }
+      .resume-drop.parsing {
+        border-style: solid;
+        border-color: var(--accent);
+        background: rgba(94, 106, 210, 0.06);
+      }
+      .resume-drop input[type="file"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .resume-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+      }
+      .resume-label {
+        font-size: 13px;
+        font-weight: 510;
+        color: var(--text-primary);
+        margin-bottom: 3px;
+      }
+      .resume-hint {
+        font-size: 11px;
+        color: var(--text-subtle);
+      }
+      .resume-status {
+        font-size: 11px;
+        color: var(--accent-bright);
+        margin-top: 6px;
+        display: none;
+      }
+      .resume-drop.filled .resume-status,
+      .resume-drop.parsing .resume-status {
+        display: block;
+      }
+
+      /* Consent */
+      .consent-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color 160ms ease, background 160ms ease;
+      }
+      .consent-row:hover {
+        border-color: var(--border-strong);
+      }
+      .consent-row input[type="checkbox"] {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        margin-top: 1px;
+        accent-color: var(--accent-bright);
+        cursor: pointer;
+      }
+      .consent-row span {
+        font-size: 12.5px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        letter-spacing: -0.138px;
+      }
+
+      /* Submit */
+      .submit {
+        margin-top: 10px;
+        padding: 14px 24px;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 510;
+        font-feature-settings: "cv01", "ss03";
+        letter-spacing: -0.165px;
+        color: #ffffff;
+        background: var(--accent);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 120ms ease;
+        -webkit-appearance: none;
+      }
+      .submit:hover:not(:disabled) { background: var(--accent-hover); }
+      .submit:active:not(:disabled) { transform: translateY(0.5px); }
+      .submit:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .hint-row {
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-subtle);
+        margin-top: 4px;
+      }
+
+      .error-box {
+        display: none;
+        padding: 12px 14px;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        color: #fca5a5;
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      .error-box.visible { display: block; }
+
+      @media (max-width: 540px) {
+        .wrap { padding: 28px 18px calc(40px + env(safe-area-inset-bottom)); }
+        h1 { font-size: 26px; letter-spacing: -0.572px; }
+        .subtitle { font-size: 13px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="brand">Voxaris</div>
+
+      <div class="role-badge-wrap">
+        <span class="role-badge" id="role-badge">Screening Interview</span>
+      </div>
+
+      <h1 id="page-title">Before your interview</h1>
+      <p class="subtitle">
+        Quick 2-minute form. Once you're done, you'll join Jordan for a 10-minute
+        video conversation about the role.
+      </p>
+
+      <form id="apply-form" autocomplete="on" novalidate>
+        <div class="field">
+          <label for="first_name">First name<span class="req">*</span></label>
+          <input type="text" id="first_name" name="first_name" required autocomplete="given-name" />
+        </div>
+
+        <div class="field">
+          <label for="last_name">Last name<span class="req">*</span></label>
+          <input type="text" id="last_name" name="last_name" required autocomplete="family-name" />
+        </div>
+
+        <div class="field">
+          <label for="email">Email<span class="req">*</span></label>
+          <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone<span class="req">*</span></label>
+          <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="(407) 555-1234" />
+        </div>
+
+        <div class="field">
+          <label for="years_experience">Years of experience<span class="req">*</span></label>
+          <select id="years_experience" name="years_experience" required>
+            <option value="">Select…</option>
+            <option value="0-1">Less than 1 year</option>
+            <option value="1-3">1 to 3 years</option>
+            <option value="3-5">3 to 5 years</option>
+            <option value="5-10">5 to 10 years</option>
+            <option value="10+">10+ years</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="most_recent_employer">Most recent employer</label>
+          <input type="text" id="most_recent_employer" name="most_recent_employer" autocomplete="organization" placeholder="Optional" />
+        </div>
+
+        <div class="field">
+          <label for="resume-file">Resume (PDF, optional)</label>
+          <div class="resume-drop" id="resume-drop">
+            <input type="file" id="resume-file" accept="application/pdf,.pdf" />
+            <div class="resume-icon">📄</div>
+            <div class="resume-label" id="resume-label">Tap to upload your resume</div>
+            <div class="resume-hint">PDF only · text is processed locally on your device</div>
+            <div class="resume-status" id="resume-status"></div>
+          </div>
+        </div>
+
+        <label class="consent-row" for="consent-check">
+          <input type="checkbox" id="consent-check" required />
+          <span>
+            I understand this interview is conducted by an AI assistant and I
+            consent to having this session recorded so a human recruiter can
+            review it afterward. No automated hiring decision is made — a real
+            recruiter reviews every profile.
+          </span>
+        </label>
+
+        <div class="error-box" id="error-box"></div>
+
+        <button type="submit" class="submit" id="submit-btn" disabled>
+          <span id="submit-label">Start interview</span>
+        </button>
+
+        <div class="hint-row">You'll need camera and microphone access on the next page</div>
+      </form>
+    </div>
+
+    <script>
+      // ──────────────────────────────────────────────────────────────
+      //  Query params → pre-fill if provided
+      // ──────────────────────────────────────────────────────────────
+      const qs = new URLSearchParams(location.search);
+      const URL_ROLE = qs.get("role") || "hospitality";
+      const URL_AGENCY = qs.get("agency") || "our staffing team";
+
+      const ROLE_LABEL = {
+        hospitality: "Hotel / Banquet Server",
+        warehouse: "Warehouse Associate",
+        healthcare_admin: "Medical Admin Assistant",
+        general: "General Labor",
+      };
+      const prettyRole = ROLE_LABEL[URL_ROLE] || "Screening Interview";
+      document.getElementById("role-badge").textContent = prettyRole;
+      document.title = `Apply — ${prettyRole} — Voxaris`;
+
+      // ──────────────────────────────────────────────────────────────
+      //  Resume upload + PDF parse (pdf.js, client-side)
+      // ──────────────────────────────────────────────────────────────
+      const resumeDrop = document.getElementById("resume-drop");
+      const resumeFile = document.getElementById("resume-file");
+      const resumeLabel = document.getElementById("resume-label");
+      const resumeStatus = document.getElementById("resume-status");
+
+      let resumeText = "";
+
+      async function parsePdf(file) {
+        if (typeof window.pdfjsLib === "undefined") {
+          throw new Error("PDF parser failed to load. Skip the resume or retry.");
+        }
+        const buf = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+        let text = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map((it) => it.str).filter(Boolean);
+          text += strings.join(" ") + "\n\n";
+        }
+        return text.trim();
+      }
+
+      resumeFile.addEventListener("change", async (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+
+        if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) {
+          showError("Please upload a PDF. We don't support .docx or .doc here yet.");
+          resumeFile.value = "";
+          return;
+        }
+        if (f.size > 8 * 1024 * 1024) {
+          showError("Resume is over 8 MB — please upload a smaller PDF.");
+          resumeFile.value = "";
+          return;
+        }
+
+        hideError();
+        resumeDrop.classList.remove("filled");
+        resumeDrop.classList.add("parsing");
+        resumeLabel.textContent = "Parsing resume…";
+        resumeStatus.textContent = "Extracting text locally on your device";
+
+        try {
+          const text = await parsePdf(f);
+          resumeText = text;
+          resumeDrop.classList.remove("parsing");
+          resumeDrop.classList.add("filled");
+          resumeLabel.textContent = f.name;
+          const wordCount = text.split(/\s+/).filter(Boolean).length;
+          resumeStatus.textContent = `✓ Parsed ${wordCount.toLocaleString()} words — ready`;
+          validateForm();
+        } catch (err) {
+          console.error("pdf parse failed:", err);
+          resumeDrop.classList.remove("parsing", "filled");
+          resumeLabel.textContent = "Tap to upload your resume";
+          resumeStatus.textContent = "";
+          resumeText = "";
+          showError("Couldn't parse that PDF. You can skip the resume and continue.");
+          resumeFile.value = "";
+        }
+      });
+
+      // ──────────────────────────────────────────────────────────────
+      //  Form validation
+      // ──────────────────────────────────────────────────────────────
+      const form = document.getElementById("apply-form");
+      const submitBtn = document.getElementById("submit-btn");
+      const errorBox = document.getElementById("error-box");
+
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.classList.add("visible");
+      }
+      function hideError() {
+        errorBox.classList.remove("visible");
+      }
+
+      function validateForm() {
+        const required = [
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "years_experience",
+        ];
+        const allFilled = required.every((id) => {
+          const el = document.getElementById(id);
+          return el && el.value && el.value.trim().length > 0;
+        });
+        const consent = document.getElementById("consent-check").checked;
+        submitBtn.disabled = !(allFilled && consent);
+      }
+
+      form.addEventListener("input", validateForm);
+      form.addEventListener("change", validateForm);
+      document.getElementById("consent-check").addEventListener("change", validateForm);
+
+      // ──────────────────────────────────────────────────────────────
+      //  Submit handler
+      // ──────────────────────────────────────────────────────────────
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideError();
+        submitBtn.disabled = true;
+        document.getElementById("submit-label").textContent = "Starting your interview…";
+
+        const firstName = document.getElementById("first_name").value.trim();
+        const lastName = document.getElementById("last_name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const yearsExp = document.getElementById("years_experience").value;
+        const mostRecentEmployer = document
+          .getElementById("most_recent_employer")
+          .value.trim();
+        const consent = document.getElementById("consent-check").checked;
+
+        if (!consent) {
+          showError("You must consent to the AI interview and recording before continuing.");
+          submitBtn.disabled = false;
+          document.getElementById("submit-label").textContent = "Start interview";
+          return;
+        }
+
+        const payload = {
+          candidate_name: `${firstName} ${lastName}`.trim(),
+          role: URL_ROLE,
+          agency_name: URL_AGENCY,
+          email,
+          phone,
+          years_experience: yearsExp,
+          most_recent_employer: mostRecentEmployer || null,
+          resume_text: resumeText || null,
+          consent_given: true,
+          consent_timestamp: new Date().toISOString(),
+        };
+
+        try {
+          const r = await fetch("/api/staffing/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await r.json();
+          if (!r.ok || !data.conversation_url) {
+            throw new Error(data.error || "Couldn't start the interview.");
+          }
+
+          // Hand off to the live video page with the conversation URL pre-loaded
+          const params = new URLSearchParams({
+            conversation_id: data.conversation_id,
+            conversation_url: data.conversation_url,
+            candidate_name: payload.candidate_name,
+            role: URL_ROLE,
+            agency: URL_AGENCY,
+            prefetched: "1",
+          });
+          location.href = `/staffing-embed.html?${params.toString()}`;
+        } catch (err) {
+          console.error("apply submit failed:", err);
+          showError(err.message || "Something went wrong. Try again in a moment.");
+          submitBtn.disabled = false;
+          document.getElementById("submit-label").textContent = "Start interview";
+        }
+      });
+    </script>
+  </body>
+</html>

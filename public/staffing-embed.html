@@ -903,8 +903,65 @@
 
       // ──────────────────────────────────────────────────────────────
       //  Boot
+      //
+      //  Two entry paths:
+      //  (1) Direct visit — POST to /api/staffing/conversations to create
+      //      a fresh session, then render the panel and wait for start.
+      //  (2) Prefetched from /apply — the apply form already created the
+      //      conversation and passed conversation_url + conversation_id
+      //      in the query string. Skip the POST and use those directly.
       // ──────────────────────────────────────────────────────────────
       async function boot() {
+        const prefetched = qs.get("prefetched") === "1";
+        const prefetchedUrl = qs.get("conversation_url");
+        const prefetchedId = qs.get("conversation_id");
+
+        if (prefetched && prefetchedUrl && prefetchedId) {
+          // Apply-form handoff — conversation already exists on Tavus
+          conversationId = prefetchedId;
+          conversationUrl = prefetchedUrl;
+
+          // Best-effort fetch of the role details from the GET poller so
+          // we can still render the panel nicely. Falls back to URL params.
+          try {
+            const r = await fetch(
+              "/api/staffing/tools?conversation_id=" +
+                encodeURIComponent(prefetchedId)
+            );
+            const data = await r.json();
+            const session = (data && data.session) || {};
+            renderPanel({
+              role: session.applied_role || ROLE_LABEL[params.role] || "Screening Interview",
+              role_details: {
+                title:
+                  session.applied_role ||
+                  ROLE_LABEL[params.role] ||
+                  "Screening Interview",
+                venue_type: session.venue_type || "—",
+                pay_range: session.pay_range || "—",
+                shift: session.shift || "—",
+                must_haves: session.must_haves || [],
+              },
+            });
+          } catch (_) {
+            renderPanel({
+              role: "Screening Interview",
+              role_details: {
+                title: "Screening Interview",
+                venue_type: "—",
+                pay_range: "—",
+                shift: "—",
+                must_haves: [],
+              },
+            });
+          }
+
+          el("panel").classList.add("visible");
+          el("start-btn").addEventListener("click", startInterview);
+          return;
+        }
+
+        // Direct visit — standard flow
         try {
           const r = await fetch("/api/staffing/conversations", {
             method: "POST",
@@ -928,6 +985,14 @@
           showError(e.message);
         }
       }
+
+      // Simple role label lookup for prefetched mode fallback
+      const ROLE_LABEL = {
+        hospitality: "Hotel / Banquet Server",
+        warehouse: "Warehouse Associate",
+        healthcare_admin: "Medical Admin Assistant",
+        general: "General Labor",
+      };
 
       boot();
     </script>
