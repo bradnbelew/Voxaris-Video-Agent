@@ -35,7 +35,7 @@
 const https = require("https");
 const { config } = require("../../../staffing/config/staffing-config");
 const { buildRoleContext } = require("../../../staffing/lib/role-context");
-const { putSession } = require("../../../shared/google-sheets");
+const { putSession } = require("../../../shared/session-store");
 
 const TAVUS_HOST = "tavusapi.com";
 const MAX_RESUME_CHARS = 12000; // safety cap on resume text injection
@@ -170,16 +170,55 @@ module.exports = async (req, res) => {
       resume_text,
       consent_given,
       consent_timestamp,
+      bipa_consent,
+      bipa_consent_timestamp,
     } = body;
 
-    // If the request came from the /apply pre-interview form, consent MUST
-    // be explicitly true. Reject otherwise — this is the legal gate.
+    // ── EU AI Act block ─────────────────────────────────────────────
+    // Art. 5(1)(f) bans emotion recognition in the workplace. Raven-1
+    // perception on Jordan does exactly that, so we block EU users
+    // entirely and surface a clear message. The country header is set
+    // by Vercel Edge / Cloudflare.
+    const EU_COUNTRIES = new Set([
+      "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR",
+      "HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK",
+      "SI","ES","SE","IS","LI","NO",
+    ]);
+    const ipCountry = (
+      req.headers["x-vercel-ip-country"] ||
+      req.headers["cf-ipcountry"] ||
+      ""
+    ).toUpperCase();
+    if (ipCountry && EU_COUNTRIES.has(ipCountry)) {
+      res.status(451).json({
+        ok: false,
+        error:
+          "This AI video interview is not available in your region. EU AI Act Article 5(1)(f) prohibits emotion recognition in the workplace. Please contact accommodations@voxaris.io for a human-led alternative.",
+        country: ipCountry,
+      });
+      return;
+    }
+
+    // ── Consent gates ───────────────────────────────────────────────
+    // If the request came from the /apply pre-interview form, BOTH
+    // general consent AND biometric consent MUST be explicitly true.
     const cameFromApplyForm = !!(email || phone || resume_text);
     if (cameFromApplyForm && consent_given !== true) {
       res.status(400).json({
         ok: false,
         error:
           "Consent required. The apply form must submit consent_given=true and a consent_timestamp before an interview can start.",
+      });
+      return;
+    }
+    // BIPA gate — required whenever bipa_consent field is present
+    // (i.e. the new apply form sent it). Without this, Raven-1
+    // perception runs against an unconsented candidate = lawsuit.
+    if (cameFromApplyForm && bipa_consent !== true) {
+      res.status(400).json({
+        ok: false,
+        error:
+          "Biometric consent required. Illinois BIPA (740 ILCS 14) and Maryland HB 1202 require explicit consent before facial/voice analysis. Check the biometric consent box on the apply form.",
       });
       return;
     }
@@ -259,6 +298,8 @@ module.exports = async (req, res) => {
       consent_timestamp: consent_timestamp || null,
       resume_uploaded: !!(resume_text && resume_text.length > 0),
       resume_length: resume_text ? resume_text.length : 0,
+      bipa_consent: bipa_consent === true,
+      bipa_consent_timestamp: bipa_consent_timestamp || null,
       came_from_apply_form: cameFromApplyForm,
       started_at: new Date().toISOString(),
       objectives_completed: [],

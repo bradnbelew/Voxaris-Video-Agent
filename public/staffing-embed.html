@@ -1035,7 +1035,13 @@
           const stream = new MediaStream([videoTrack.persistentTrack]);
           if (videoEl.srcObject !== stream) {
             videoEl.srcObject = stream;
-            videoEl.play().catch((e) => console.warn("[daily] video play:", e.message));
+            videoEl.play().catch((e) => {
+              // iOS Low Power Mode + Safari autoplay policy — play() rejects
+              // even after a user gesture if the device is power-constrained.
+              // Show a tap-to-play overlay instead of a black screen.
+              console.warn("[daily] video play blocked:", e.message);
+              showTapToPlay();
+            });
             videoEl.classList.add("live");
           }
         }
@@ -1045,9 +1051,33 @@
           const stream = new MediaStream([audioTrack.persistentTrack]);
           if (audioEl.srcObject !== stream) {
             audioEl.srcObject = stream;
-            audioEl.play().catch((e) => console.warn("[daily] audio play:", e.message));
+            audioEl.play().catch((e) => {
+              console.warn("[daily] audio play blocked:", e.message);
+              showTapToPlay();
+            });
           }
         }
+      }
+
+      // iOS / Low Power Mode fallback — tap anywhere on the video stage to
+      // resume playback. The overlay appears only when play() rejects.
+      let tapOverlayShown = false;
+      function showTapToPlay() {
+        if (tapOverlayShown) return;
+        tapOverlayShown = true;
+        showStatus("warn", "Tap the video to enable playback");
+        const stage = el("video-col");
+        if (!stage) return;
+        const handler = () => {
+          const v = el("jordan-video");
+          const a = el("jordan-audio");
+          if (v) v.play().catch(() => {});
+          if (a) a.play().catch(() => {});
+          hideStatus();
+          stage.removeEventListener("click", handler);
+          tapOverlayShown = false;
+        };
+        stage.addEventListener("click", handler, { once: true });
       }
 
       async function startInterview() {

@@ -16,7 +16,7 @@
 const https = require("https");
 const { config } = require("../../../realty/config/realty-config");
 const { fetchListingContext } = require("../../../realty/lib/rag");
-const { putSession } = require("../../../shared/google-sheets");
+const { putSession } = require("../../../shared/session-store");
 
 const TAVUS_HOST = "tavusapi.com";
 
@@ -95,6 +95,31 @@ module.exports = async (req, res) => {
       source = "web",
       brokerage_name = "our brokerage",
     } = body;
+
+    // ── EU AI Act block ─────────────────────────────────────────────
+    // Raven-1 perception (emotion recognition) on Aria triggers
+    // Art. 5(1)(f) for EU users even in non-employment contexts if
+    // the interaction is used to assess housing eligibility. Block
+    // EU regions and offer a human alternative.
+    const EU_COUNTRIES = new Set([
+      "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR",
+      "HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK",
+      "SI","ES","SE","IS","LI","NO",
+    ]);
+    const ipCountry = (
+      req.headers["x-vercel-ip-country"] ||
+      req.headers["cf-ipcountry"] ||
+      ""
+    ).toUpperCase();
+    if (ipCountry && EU_COUNTRIES.has(ipCountry)) {
+      res.status(451).json({
+        ok: false,
+        error:
+          "This AI virtual showing is not available in your region due to EU AI Act restrictions. Please contact the listing agent directly for a showing.",
+        country: ipCountry,
+      });
+      return;
+    }
 
     const baseUrl =
       process.env.REALTY_BASE_URL ||

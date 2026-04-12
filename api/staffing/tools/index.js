@@ -16,7 +16,8 @@
 const {
   putSession,
   getSession,
-} = require("../../../shared/google-sheets");
+  pushDlq,
+} = require("../../../shared/session-store");
 const { triggerN8n } = require("../../../shared/n8n-trigger");
 const { logStaffingSession } = require("../../../staffing/lib/sheets-logger");
 const { verifyWebhook } = require("../../../shared/webhook-verify");
@@ -329,5 +330,14 @@ module.exports = async (req, res) => {
     await processWebhookAsync(payload);
   } catch (e) {
     console.error("staffing/tools webhook error:", e.message, e.stack);
+    // Push to DLQ so the payload isn't lost permanently
+    try {
+      const cid = payload.conversation_id || payload.conversationId || null;
+      const eventType =
+        payload.event_type || payload.objective_name || payload.tool_name || "unknown";
+      await pushDlq(cid, "staffing", eventType, payload, e.message);
+    } catch (dlqErr) {
+      console.error("staffing/tools DLQ push also failed:", dlqErr.message);
+    }
   }
 };

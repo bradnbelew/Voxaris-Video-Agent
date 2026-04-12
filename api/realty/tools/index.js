@@ -20,7 +20,8 @@
 const {
   putSession,
   getSession,
-} = require("../../../shared/google-sheets");
+  pushDlq,
+} = require("../../../shared/session-store");
 const { triggerN8n } = require("../../../shared/n8n-trigger");
 const { logRealtySession } = require("../../../realty/lib/sheets-logger");
 const { verifyWebhook } = require("../../../shared/webhook-verify");
@@ -243,5 +244,13 @@ module.exports = async (req, res) => {
     await processWebhookAsync(payload);
   } catch (e) {
     console.error("realty/tools webhook error:", e.message, e.stack);
+    try {
+      const cid = payload.conversation_id || payload.conversationId || null;
+      const eventType =
+        payload.event_type || payload.objective_name || payload.tool_name || "unknown";
+      await pushDlq(cid, "realty", eventType, payload, e.message);
+    } catch (dlqErr) {
+      console.error("realty/tools DLQ push also failed:", dlqErr.message);
+    }
   }
 };

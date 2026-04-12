@@ -472,6 +472,28 @@
           </span>
         </label>
 
+        <!-- BIPA / biometric consent — required for IL, MD, and best practice
+             everywhere. Separate checkbox so BIPA consent is independently
+             auditable with its own timestamp. -->
+        <label class="consent-row" for="bipa-check">
+          <input type="checkbox" id="bipa-check" required />
+          <span>
+            I consent to the collection and analysis of my facial expressions
+            and voice characteristics during this video interview for the
+            purpose of candidate evaluation. This data is processed in real
+            time and is not stored as a biometric template after the session
+            ends. Full details:
+            <a href="/biometric-policy.html" target="_blank" rel="noopener" style="color: var(--ray-blue); text-decoration: underline;">Biometric Data Policy</a>.
+          </span>
+        </label>
+
+        <!-- ADA accommodation opt-out — federal requirement -->
+        <div style="text-align: center; margin-top: 2px;">
+          <a href="mailto:accommodations@voxaris.io?subject=Interview%20Accommodation%20Request"
+             style="font-size: 11.5px; color: var(--text-muted); text-decoration: underline; letter-spacing: 0.05em;"
+             >Need an accommodation? Request a human-led interview instead.</a>
+        </div>
+
         <div class="error-box" id="error-box"></div>
 
         <button type="submit" class="submit" id="submit-btn" disabled>
@@ -583,12 +605,14 @@
           return el && el.value && el.value.trim().length > 0;
         });
         const consent = document.getElementById("consent-check").checked;
-        submitBtn.disabled = !(allFilled && consent);
+        const bipaConsent = document.getElementById("bipa-check").checked;
+        submitBtn.disabled = !(allFilled && consent && bipaConsent);
       }
 
       form.addEventListener("input", validateForm);
       form.addEventListener("change", validateForm);
       document.getElementById("consent-check").addEventListener("change", validateForm);
+      document.getElementById("bipa-check").addEventListener("change", validateForm);
 
       // Submit handler
       form.addEventListener("submit", async (e) => {
@@ -614,6 +638,15 @@
           return;
         }
 
+        const bipaConsent = document.getElementById("bipa-check").checked;
+        if (!bipaConsent) {
+          showError("You must consent to the biometric data analysis before continuing.");
+          submitBtn.disabled = false;
+          document.getElementById("submit-label").textContent = "Start interview";
+          return;
+        }
+
+        const now = new Date().toISOString();
         const payload = {
           candidate_name: `${firstName} ${lastName}`.trim(),
           role: URL_ROLE,
@@ -624,7 +657,9 @@
           most_recent_employer: mostRecentEmployer || null,
           resume_text: resumeText || null,
           consent_given: true,
-          consent_timestamp: new Date().toISOString(),
+          consent_timestamp: now,
+          bipa_consent: true,
+          bipa_consent_timestamp: now,
         };
 
         try {
