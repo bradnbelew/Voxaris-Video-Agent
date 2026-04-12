@@ -6,66 +6,146 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#1f2228" />
+    <meta name="theme-color" content="#07080a" />
     <title>Voxaris AI — Demo</title>
     <meta name="description" content="Voxaris AI conversational video interview demo." />
 
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@300..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300..700&display=swap"
       rel="stylesheet"
     />
 
     <style>
+      /* ──────────────────────────────────────────────────────────────
+         Raycast design system — deep near-black base that preserves
+         the chrome logo, coral-red primary accent, warm glow, layered
+         shadows, Inter Variable with slight positive tracking.
+         ────────────────────────────────────────────────────────────── */
       :root {
-        --bg: #1f2228;
-        --fg: #ffffff;
-        --fg-secondary: rgba(255, 255, 255, 0.7);
-        --fg-tertiary: rgba(255, 255, 255, 0.5);
-        --border-strong: rgba(255, 255, 255, 0.2);
+        --bg-0: #050608;
+        --bg-1: #07080a;
+        --bg-2: #0e1014;
+        --bg-3: #151820;
+
+        --text-primary: #f5f6f7;
+        --text-secondary: #c9ccd3;
+        --text-muted: #7c818c;
+        --text-subtle: #555962;
+
+        --ray-red: #ff6363;
+        --ray-red-bright: #ff7a7a;
+        --ray-red-glow: rgba(255, 99, 99, 0.22);
+        --ray-blue: #55b3ff;
+        --ray-green: #5fc992;
+        --ray-yellow: #ffbc33;
+
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.09);
+        --border-strong: rgba(255, 255, 255, 0.16);
+
+        --surface-1: rgba(255, 255, 255, 0.025);
+        --surface-2: rgba(255, 255, 255, 0.045);
+        --surface-3: rgba(255, 255, 255, 0.07);
+
+        --warm-glow: radial-gradient(
+          ellipse 70% 50% at 50% 0%,
+          rgba(215, 201, 175, 0.07),
+          transparent 60%
+        );
+        --red-halo: radial-gradient(
+          ellipse 55% 45% at 50% 28%,
+          rgba(255, 99, 99, 0.11),
+          transparent 65%
+        );
+
+        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45),
+          0 8px 28px rgba(0, 0, 0, 0.35),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4),
+          0 6px 18px rgba(255, 99, 99, 0.28),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+
+        --font-sans: "Inter Variable", "Inter", -apple-system,
+          BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
         --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-        --font-sans: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       html, body {
         margin: 0;
         padding: 0;
         min-height: 100dvh;
-        background: var(--bg);
-        color: var(--fg);
+        background: var(--bg-1);
+        color: var(--text-primary);
         font-family: var(--font-sans);
+        font-feature-settings: "cv01", "ss03";
+        font-variation-settings: "opsz" 32;
+        font-weight: 400;
+        letter-spacing: 0.2px;
         -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
       body {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+        padding: 40px 24px calc(48px + env(safe-area-inset-bottom));
         text-align: center;
+        background:
+          var(--warm-glow),
+          var(--red-halo),
+          var(--bg-1);
+        position: relative;
+        overflow-x: hidden;
       }
-      .wrap { max-width: 640px; width: 100%; }
+
+      /* Raycast signature diagonal stripe behind the hero */
+      body::before {
+        content: "";
+        position: fixed;
+        top: -30%;
+        left: -20%;
+        width: 140%;
+        height: 40%;
+        background: linear-gradient(
+          100deg,
+          transparent 35%,
+          rgba(255, 99, 99, 0.06) 48%,
+          rgba(255, 99, 99, 0.10) 50%,
+          rgba(255, 99, 99, 0.06) 52%,
+          transparent 65%
+        );
+        transform: rotate(-8deg);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .wrap { max-width: 680px; width: 100%; position: relative; z-index: 1; }
 
       .logo-slot {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 48px;
+        margin-bottom: 44px;
         min-height: 180px;
       }
       .logo-slot img {
-        max-width: min(560px, 85vw);
-        max-height: 200px;
+        max-width: min(540px, 82vw);
+        max-height: 190px;
         width: auto;
         height: auto;
         display: block;
+        filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.08));
       }
       .logo-fallback { display: none; text-align: center; }
       .logo-fallback.active { display: block; }
       .wordmark {
         font-family: var(--font-mono);
-        font-size: clamp(48px, 10vw, 112px);
+        font-size: clamp(52px, 10vw, 116px);
         font-weight: 300;
         line-height: 1;
         letter-spacing: -0.01em;
@@ -82,83 +162,142 @@
         -webkit-background-clip: text;
         color: transparent;
         -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.08));
+        filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.1));
       }
       .tagline {
         font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: 300;
-        letter-spacing: 0.05em;
-        color: var(--fg-tertiary);
-        margin: 14px 0 0;
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin: 16px 0 0;
+        text-transform: uppercase;
+      }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px 6px 10px;
+        border-radius: 9999px;
+        background: rgba(255, 99, 99, 0.08);
+        border: 1px solid rgba(255, 99, 99, 0.28);
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ray-red-bright);
+        margin-bottom: 22px;
+      }
+      .kicker::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ray-red);
+        box-shadow: 0 0 10px var(--ray-red-glow);
+        animation: kicker-pulse 2s ease-in-out infinite;
+      }
+      @keyframes kicker-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
       }
 
       h1 {
         font-family: var(--font-sans);
-        font-size: clamp(22px, 3.4vw, 30px);
-        font-weight: 500;
-        line-height: 1.2;
-        letter-spacing: -0.01em;
+        font-size: clamp(26px, 4vw, 36px);
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.4px;
         margin: 0 auto 18px;
-        max-width: 520px;
+        max-width: 540px;
+        color: var(--text-primary);
       }
       p.sub {
         font-family: var(--font-sans);
         font-size: 15px;
         line-height: 1.6;
-        color: var(--fg-secondary);
-        max-width: 480px;
-        margin: 0 auto 36px;
+        color: var(--text-secondary);
+        max-width: 500px;
+        margin: 0 auto 38px;
+        letter-spacing: 0.1px;
       }
 
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 16px 32px;
-        font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: 400;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        gap: 8px;
+        padding: 15px 30px;
+        font-family: var(--font-sans);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
         text-decoration: none;
-        border-radius: 0;
-        border: 1px solid var(--fg);
-        background: var(--fg);
-        color: var(--bg);
+        border-radius: 10px;
+        border: 0;
+        background: linear-gradient(180deg, var(--ray-red-bright), var(--ray-red));
+        color: #ffffff;
         cursor: pointer;
-        transition: background 160ms ease;
+        transition: transform 160ms ease, box-shadow 200ms ease, filter 160ms ease;
+        box-shadow: var(--shadow-btn);
       }
-      .btn:hover { background: rgba(255, 255, 255, 0.88); }
+      .btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4),
+          0 10px 28px rgba(255, 99, 99, 0.38),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+      .btn:active { transform: translateY(0); }
+      .btn .arrow {
+        font-family: var(--font-mono);
+        font-weight: 400;
+        transition: transform 160ms ease;
+      }
+      .btn:hover .arrow { transform: translateX(3px); }
 
       .steps {
-        margin-top: 56px;
+        margin-top: 60px;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        max-width: 640px;
+        gap: 14px;
+        max-width: 680px;
       }
       .step {
-        padding: 18px 14px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px 18px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
         text-align: left;
+        box-shadow: var(--shadow-card);
+        transition: transform 200ms ease, border-color 200ms ease;
+      }
+      .step:hover {
+        transform: translateY(-2px);
+        border-color: var(--border-strong);
       }
       .step .num {
         font-family: var(--font-mono);
         font-size: 10px;
-        letter-spacing: 0.18em;
-        color: var(--fg-tertiary);
-        margin-bottom: 8px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        color: var(--ray-red-bright);
+        margin-bottom: 10px;
+        text-transform: uppercase;
       }
       .step .label {
         font-family: var(--font-sans);
         font-size: 13px;
         font-weight: 500;
-        color: var(--fg);
-        line-height: 1.4;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        letter-spacing: 0.1px;
       }
-      @media (max-width: 560px) {
-        .steps { grid-template-columns: 1fr; }
+      @media (max-width: 620px) {
+        .steps { grid-template-columns: 1fr; gap: 10px; margin-top: 44px; }
+        .logo-slot { margin-bottom: 32px; min-height: 140px; }
       }
     </style>
   </head>
@@ -177,28 +316,28 @@
         </div>
       </div>
 
+      <div class="kicker">Live Demo</div>
       <h1>Talk to Jordan — an AI video interviewer.</h1>
       <p class="sub">
-        This is a live demo. You'll fill out a short form, have a real
-        two-way video conversation with Jordan, then see a summary of your
-        interview on the completion page. Takes about 10 minutes.
+        Fill out a short form, have a real two-way video conversation with
+        Jordan, then see a summary of your interview. Takes about 10 minutes.
       </p>
 
       <a href="/apply?role=hospitality&agency=Voxaris+Demo" class="btn">
-        START DEMO →
+        Start demo <span class="arrow">→</span>
       </a>
 
       <div class="steps">
         <div class="step">
-          <div class="num">01 · APPLY</div>
+          <div class="num">01 · Apply</div>
           <div class="label">Fill out a short pre-interview form with your details.</div>
         </div>
         <div class="step">
-          <div class="num">02 · INTERVIEW</div>
+          <div class="num">02 · Interview</div>
           <div class="label">Live video conversation with Jordan, roughly 10 minutes.</div>
         </div>
         <div class="step">
-          <div class="num">03 · COMPLETE</div>
+          <div class="num">03 · Complete</div>
           <div class="label">See your interview summary and what happens next.</div>
         </div>
       </div>

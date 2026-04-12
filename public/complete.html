@@ -6,157 +6,228 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#1f2228" />
+    <meta name="theme-color" content="#07080a" />
     <title>Interview Complete — Voxaris AI</title>
 
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@300..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300..700&display=swap"
       rel="stylesheet"
     />
 
     <style>
+      /* Raycast theme */
       :root {
-        --bg: #1f2228;
-        --fg: #ffffff;
-        --fg-secondary: rgba(255, 255, 255, 0.7);
-        --fg-tertiary: rgba(255, 255, 255, 0.5);
-        --fg-quaternary: rgba(255, 255, 255, 0.3);
-        --border: rgba(255, 255, 255, 0.1);
-        --border-strong: rgba(255, 255, 255, 0.2);
-        --surface-1: rgba(255, 255, 255, 0.05);
-        --success: #10b981;
+        --bg-0: #050608;
+        --bg-1: #07080a;
+        --bg-2: #0e1014;
+        --bg-3: #151820;
+        --text-primary: #f5f6f7;
+        --text-secondary: #c9ccd3;
+        --text-muted: #7c818c;
+        --text-subtle: #555962;
+        --ray-red: #ff6363;
+        --ray-red-bright: #ff7a7a;
+        --ray-red-glow: rgba(255, 99, 99, 0.22);
+        --ray-blue: #55b3ff;
+        --ray-green: #5fc992;
+        --ray-yellow: #ffbc33;
+        --border-subtle: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.09);
+        --border-strong: rgba(255, 255, 255, 0.16);
+        --surface-1: rgba(255, 255, 255, 0.025);
+        --surface-2: rgba(255, 255, 255, 0.045);
+        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45),
+          0 8px 28px rgba(0, 0, 0, 0.35),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        --font-sans: "Inter Variable", "Inter", -apple-system,
+          BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
         --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-        --font-sans: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       html, body {
         margin: 0;
         padding: 0;
         min-height: 100dvh;
-        background: var(--bg);
-        color: var(--fg);
+        background: var(--bg-1);
+        color: var(--text-primary);
         font-family: var(--font-sans);
+        font-feature-settings: "cv01", "ss03";
+        font-weight: 400;
+        letter-spacing: 0.2px;
         -webkit-font-smoothing: antialiased;
       }
       body {
-        padding: 40px 24px calc(60px + env(safe-area-inset-bottom));
+        padding: 44px 22px calc(60px + env(safe-area-inset-bottom));
+        background:
+          radial-gradient(
+            ellipse 60% 40% at 50% 15%,
+            rgba(95, 201, 146, 0.08),
+            transparent 65%
+          ),
+          radial-gradient(
+            ellipse 70% 50% at 50% 0%,
+            rgba(215, 201, 175, 0.06),
+            transparent 60%
+          ),
+          var(--bg-1);
+        position: relative;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: -25%;
+        left: -20%;
+        width: 140%;
+        height: 38%;
+        background: linear-gradient(
+          100deg,
+          transparent 35%,
+          rgba(95, 201, 146, 0.05) 48%,
+          rgba(95, 201, 146, 0.08) 50%,
+          rgba(95, 201, 146, 0.05) 52%,
+          transparent 65%
+        );
+        transform: rotate(-8deg);
+        pointer-events: none;
+        z-index: 0;
       }
       .wrap {
-        max-width: 640px;
+        max-width: 660px;
         margin: 0 auto;
         text-align: center;
+        position: relative;
+        z-index: 1;
       }
 
-      /* Success check mark */
+      /* Success check */
       .check {
-        width: 76px;
-        height: 76px;
-        margin: 20px auto 32px;
-        border: 1.5px solid var(--success);
+        width: 72px;
+        height: 72px;
+        margin: 16px auto 28px;
         border-radius: 50%;
+        background: radial-gradient(
+          circle at 50% 40%,
+          rgba(95, 201, 146, 0.2),
+          rgba(95, 201, 146, 0.04) 70%
+        );
+        border: 1.5px solid rgba(95, 201, 146, 0.55);
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
+        box-shadow: 0 0 40px rgba(95, 201, 146, 0.18),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.06);
       }
       .check::after {
         content: "";
-        width: 22px;
-        height: 40px;
-        border-right: 2px solid var(--success);
-        border-bottom: 2px solid var(--success);
+        width: 20px;
+        height: 38px;
+        border-right: 2px solid var(--ray-green);
+        border-bottom: 2px solid var(--ray-green);
         transform: rotate(45deg) translate(-2px, -4px);
       }
 
       .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px 6px 10px;
+        border-radius: 9999px;
+        background: rgba(95, 201, 146, 0.08);
+        border: 1px solid rgba(95, 201, 146, 0.28);
         font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 400;
-        letter-spacing: 0.2em;
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: var(--success);
-        margin-bottom: 14px;
+        color: var(--ray-green);
+        margin-bottom: 18px;
+      }
+      .kicker::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ray-green);
+        box-shadow: 0 0 10px rgba(95, 201, 146, 0.55);
       }
 
       h1 {
         font-family: var(--font-sans);
-        font-size: clamp(28px, 5vw, 42px);
-        font-weight: 500;
-        line-height: 1.15;
-        letter-spacing: -0.01em;
+        font-size: clamp(28px, 5vw, 40px);
+        font-weight: 600;
+        line-height: 1.12;
+        letter-spacing: -0.5px;
         margin: 0 0 16px;
+        color: var(--text-primary);
       }
       p.sub {
         font-family: var(--font-sans);
         font-size: 15px;
         line-height: 1.6;
-        color: var(--fg-secondary);
-        max-width: 460px;
+        color: var(--text-secondary);
+        max-width: 480px;
         margin: 0 auto 42px;
+        letter-spacing: 0.1px;
       }
 
-      /* Summary card */
-      .summary-card {
-        background: var(--surface-1);
+      /* Cards */
+      .card {
+        background: var(--bg-2);
         border: 1px solid var(--border);
-        padding: 28px 26px;
+        border-radius: 14px;
+        padding: 22px 22px 20px;
         text-align: left;
-        margin: 0 0 28px;
+        margin: 0 0 16px;
+        box-shadow: var(--shadow-card);
       }
-      .summary-card .section-label {
+      .section-label {
         font-family: var(--font-mono);
         font-size: 10px;
-        letter-spacing: 0.2em;
+        font-weight: 500;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: var(--fg-tertiary);
-        margin-bottom: 16px;
+        color: var(--text-subtle);
+        margin-bottom: 14px;
       }
       .summary-row {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
         gap: 14px;
-        padding: 10px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border-subtle);
         font-size: 13px;
       }
-      .summary-row:last-of-type { border-bottom: 0; }
+      .summary-row:last-of-type { border-bottom: 0; padding-bottom: 0; }
+      .summary-row:first-of-type { padding-top: 0; }
       .summary-key {
         font-family: var(--font-mono);
         font-size: 10px;
-        letter-spacing: 0.08em;
+        font-weight: 500;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: var(--fg-tertiary);
+        color: var(--text-subtle);
         flex-shrink: 0;
       }
       .summary-val {
-        color: var(--fg-secondary);
+        color: var(--text-secondary);
         text-align: right;
         font-weight: 400;
         word-break: break-word;
+        letter-spacing: 0.1px;
       }
       .summary-val.highlight {
-        color: var(--fg);
-        font-weight: 500;
+        color: var(--text-primary);
+        font-weight: 600;
       }
 
       /* Next steps */
-      .next-steps {
-        border: 1px solid var(--border);
-        padding: 24px 26px;
-        margin: 0 0 32px;
-        text-align: left;
-      }
-      .next-steps .section-label {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: var(--fg-tertiary);
-        margin-bottom: 14px;
-      }
       .next-steps ol {
         list-style: none;
         padding: 0;
@@ -165,68 +236,87 @@
       }
       .next-steps li {
         counter-increment: next;
-        padding: 10px 0 10px 36px;
+        padding: 11px 0 11px 38px;
         position: relative;
         font-size: 13.5px;
-        line-height: 1.5;
-        color: var(--fg-secondary);
+        line-height: 1.55;
+        color: var(--text-secondary);
+        letter-spacing: 0.1px;
+        border-bottom: 1px solid var(--border-subtle);
       }
+      .next-steps li:last-child { border-bottom: 0; padding-bottom: 0; }
+      .next-steps li:first-child { padding-top: 0; }
       .next-steps li::before {
         content: "0" counter(next);
         position: absolute;
         left: 0;
-        top: 10px;
+        top: 11px;
         font-family: var(--font-mono);
-        font-size: 10px;
+        font-size: 10.5px;
+        font-weight: 500;
         letter-spacing: 0.12em;
-        color: var(--fg-quaternary);
+        color: var(--ray-red-bright);
       }
+      .next-steps li:first-child::before { top: 0; }
 
       .cta-row {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         justify-content: center;
         flex-wrap: wrap;
+        margin-top: 28px;
       }
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 14px 26px;
-        font-family: var(--font-mono);
-        font-size: 12px;
-        font-weight: 400;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        gap: 8px;
+        padding: 13px 24px;
+        font-family: var(--font-sans);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
         text-decoration: none;
-        border-radius: 0;
-        transition: background 160ms ease, color 160ms ease,
-          border-color 160ms ease;
+        border-radius: 10px;
         cursor: pointer;
+        transition: transform 160ms ease, filter 160ms ease, background 160ms ease,
+          border-color 160ms ease;
+        border: 0;
       }
       .btn.primary {
-        background: var(--fg);
-        color: var(--bg);
-        border: 1px solid var(--fg);
+        background: linear-gradient(180deg, var(--ray-red-bright), var(--ray-red));
+        color: #ffffff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+          0 6px 18px rgba(255, 99, 99, 0.28),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14);
       }
-      .btn.primary:hover { background: rgba(255, 255, 255, 0.88); }
+      .btn.primary:hover { transform: translateY(-1px); filter: brightness(1.06); }
       .btn.ghost {
-        background: transparent;
-        color: var(--fg);
+        background: var(--surface-1);
+        color: var(--text-primary);
         border: 1px solid var(--border-strong);
       }
       .btn.ghost:hover {
-        background: var(--surface-1);
-        border-color: var(--fg);
+        background: var(--surface-2);
+        border-color: rgba(255, 255, 255, 0.22);
       }
+      .btn .arrow { font-family: var(--font-mono); font-weight: 400; transition: transform 160ms ease; }
+      .btn.primary:hover .arrow { transform: translateX(3px); }
 
       .tiny {
-        margin-top: 36px;
+        margin-top: 38px;
         font-family: var(--font-mono);
         font-size: 10px;
-        letter-spacing: 0.14em;
+        font-weight: 400;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: var(--fg-quaternary);
+        color: var(--text-subtle);
+      }
+
+      @media (max-width: 560px) {
+        body { padding: 32px 18px calc(44px + env(safe-area-inset-bottom)); }
+        h1 { font-size: 26px; }
+        .card { padding: 18px; }
       }
     </style>
   </head>
@@ -242,7 +332,7 @@
         reach out within 1 business day.
       </p>
 
-      <div class="summary-card" id="summary-card" style="display: none;">
+      <div class="card" id="summary-card" style="display: none;">
         <div class="section-label">Interview Summary</div>
         <div class="summary-row">
           <span class="summary-key">Candidate</span>
@@ -262,7 +352,7 @@
         </div>
       </div>
 
-      <div class="next-steps">
+      <div class="card next-steps">
         <div class="section-label">What happens next</div>
         <ol>
           <li>A human recruiter reviews your complete interview transcript and profile, usually within 24 hours.</li>
@@ -273,21 +363,16 @@
 
       <div class="cta-row">
         <a href="/apply?role=hospitality&agency=Voxaris+Demo" class="btn primary">
-          TRY ANOTHER DEMO →
+          Try another demo <span class="arrow">→</span>
         </a>
-        <a href="/" class="btn ghost">BACK HOME</a>
+        <a href="/" class="btn ghost">Back home</a>
       </div>
 
       <div class="tiny">VOXARIS AI · PERSONALIZING YOUR OUTREACH</div>
     </div>
 
     <script>
-      // ──────────────────────────────────────────────────────────────
-      //  Populate summary from query params (passed from staffing-embed
-      //  when the session ends) or fall back to generic messaging.
-      // ──────────────────────────────────────────────────────────────
       const qs = new URLSearchParams(location.search);
-
       const candidateName = qs.get("name") || qs.get("candidate_name");
       const role = qs.get("role");
       const conversationId = qs.get("conversation_id");
@@ -331,10 +416,6 @@
         document.getElementById("row-status").textContent = "Not eligible";
       }
 
-      // Optional: poll the /api/staffing/tools endpoint once to get the
-      // final session state (transcripts, objectives completed, etc.)
-      // so the summary card stays accurate even if the query params
-      // are incomplete.
       (async () => {
         if (!conversationId) return;
         try {
@@ -354,9 +435,7 @@
           } else if (session.status === "completed") {
             document.getElementById("row-status").textContent = "Completed";
           }
-        } catch (_) {
-          /* ignore */
-        }
+        } catch (_) {}
       })();
     </script>
   </body>

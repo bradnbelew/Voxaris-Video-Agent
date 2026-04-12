@@ -6,11 +6,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=1, user-scalable=no"
     />
-    <meta name="theme-color" content="#08090a" />
+    <meta name="theme-color" content="#07080a" />
     <title>Apply — Voxaris</title>
 
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- pdf.js from Mozilla CDN for client-side PDF text extraction -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
@@ -22,126 +28,181 @@
     </script>
 
     <style>
-      /* Linear design system — same as the staffing-embed */
+      /* Raycast theme */
       :root {
-        --bg-0: #010102;
-        --bg-1: #08090a;
-        --bg-2: #0f1011;
-        --bg-3: #191a1b;
-        --text-primary: #f7f8f8;
-        --text-secondary: #d0d6e0;
-        --text-muted: #8a8f98;
-        --text-subtle: #62666d;
-        --accent: #5e6ad2;
-        --accent-bright: #7170ff;
-        --accent-hover: #828fff;
-        --accent-glow: rgba(113, 112, 255, 0.18);
+        --bg-0: #050608;
+        --bg-1: #07080a;
+        --bg-2: #0e1014;
+        --bg-3: #151820;
+        --text-primary: #f5f6f7;
+        --text-secondary: #c9ccd3;
+        --text-muted: #7c818c;
+        --text-subtle: #555962;
+        --ray-red: #ff6363;
+        --ray-red-bright: #ff7a7a;
+        --ray-red-glow: rgba(255, 99, 99, 0.22);
+        --ray-blue: #55b3ff;
+        --ray-green: #5fc992;
+        --ray-yellow: #ffbc33;
         --border-subtle: rgba(255, 255, 255, 0.05);
-        --border: rgba(255, 255, 255, 0.08);
-        --border-strong: rgba(255, 255, 255, 0.12);
-        --surface-1: rgba(255, 255, 255, 0.02);
-        --surface-2: rgba(255, 255, 255, 0.04);
-        --surface-3: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.09);
+        --border-strong: rgba(255, 255, 255, 0.16);
+        --surface-1: rgba(255, 255, 255, 0.025);
+        --surface-2: rgba(255, 255, 255, 0.045);
+        --surface-3: rgba(255, 255, 255, 0.07);
         --danger: #ef4444;
-        --success: #10b981;
+        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45),
+          0 8px 28px rgba(0, 0, 0, 0.35),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4),
+          0 6px 18px rgba(255, 99, 99, 0.28),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+        --font-sans: "Inter Variable", "Inter", -apple-system,
+          BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+        --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
       }
-      * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       html, body {
         margin: 0;
         padding: 0;
         min-height: 100%;
         background: var(--bg-1);
         color: var(--text-primary);
-        font-family: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
-          "SF Pro Display", system-ui, sans-serif;
+        font-family: var(--font-sans);
         font-feature-settings: "cv01", "ss03";
         font-variation-settings: "opsz" 32;
         font-weight: 400;
+        letter-spacing: 0.2px;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
       }
       body {
-        background: radial-gradient(
-            ellipse 60% 40% at 50% 20%,
-            rgba(94, 106, 210, 0.08),
-            transparent 70%
+        background:
+          radial-gradient(
+            ellipse 60% 40% at 50% 10%,
+            rgba(255, 99, 99, 0.08),
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 70% 50% at 50% 0%,
+            rgba(215, 201, 175, 0.06),
+            transparent 60%
           ),
           var(--bg-1);
+        position: relative;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: -25%;
+        left: -20%;
+        width: 140%;
+        height: 36%;
+        background: linear-gradient(
+          100deg,
+          transparent 35%,
+          rgba(255, 99, 99, 0.05) 48%,
+          rgba(255, 99, 99, 0.09) 50%,
+          rgba(255, 99, 99, 0.05) 52%,
+          transparent 65%
+        );
+        transform: rotate(-8deg);
+        pointer-events: none;
+        z-index: 0;
       }
 
       .wrap {
-        max-width: 560px;
+        max-width: 580px;
         margin: 0 auto;
-        padding: 40px 22px calc(60px + env(safe-area-inset-bottom));
+        padding: 42px 22px calc(60px + env(safe-area-inset-bottom));
+        position: relative;
+        z-index: 1;
       }
 
       .brand {
         text-align: center;
-        font-size: 10px;
-        font-weight: 510;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: var(--text-subtle);
+        color: var(--text-muted);
         margin-bottom: 18px;
       }
 
       .role-badge {
-        display: inline-block;
-        padding: 5px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 13px 6px 11px;
         border-radius: 9999px;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--text-secondary);
-        font-size: 10px;
-        font-weight: 510;
+        background: rgba(255, 99, 99, 0.08);
+        border: 1px solid rgba(255, 99, 99, 0.28);
+        color: var(--ray-red-bright);
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 500;
         letter-spacing: 0.14em;
         text-transform: uppercase;
       }
+      .role-badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ray-red);
+        box-shadow: 0 0 10px var(--ray-red-glow);
+      }
       .role-badge-wrap {
         text-align: center;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
       }
 
       h1 {
-        font-size: 32px;
+        font-size: 34px;
         line-height: 1.1;
-        margin: 0 0 10px;
-        font-weight: 510;
-        letter-spacing: -0.704px;
+        margin: 0 0 12px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
         text-align: center;
+        color: var(--text-primary);
       }
       .subtitle {
         text-align: center;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 14px;
-        line-height: 1.5;
-        margin: 0 0 36px;
-        letter-spacing: -0.154px;
+        line-height: 1.55;
+        margin: 0 0 38px;
+        letter-spacing: 0.1px;
       }
 
       form {
         display: flex;
         flex-direction: column;
         gap: 18px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px 22px 22px;
+        box-shadow: var(--shadow-card);
       }
 
       .field {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 7px;
       }
       .field label {
-        font-size: 11px;
-        font-weight: 510;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 500;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--text-subtle);
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
       }
       .field label .req {
-        color: var(--accent-bright);
+        color: var(--ray-red-bright);
         margin-left: 3px;
       }
       .field input[type="text"],
@@ -149,31 +210,33 @@
       .field input[type="tel"],
       .field select {
         width: 100%;
-        padding: 12px 14px;
-        background: var(--surface-1);
+        padding: 13px 14px;
+        background: var(--bg-1);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: 9px;
         color: var(--text-primary);
         font-family: inherit;
         font-size: 14px;
         font-weight: 400;
-        letter-spacing: -0.154px;
-        transition: border-color 160ms ease, background 160ms ease;
+        letter-spacing: 0.1px;
+        transition: border-color 160ms ease, background 160ms ease,
+          box-shadow 160ms ease;
         -webkit-appearance: none;
         appearance: none;
       }
       .field input:focus,
       .field select:focus {
         outline: none;
-        border-color: var(--accent-bright);
-        background: var(--surface-2);
+        border-color: var(--ray-red);
+        background: var(--bg-0);
+        box-shadow: 0 0 0 3px rgba(255, 99, 99, 0.14);
       }
       .field input::placeholder {
         color: var(--text-subtle);
       }
       .field select {
         cursor: pointer;
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M3 5l3 3 3-3' stroke='%238a8f98' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M3 5l3 3 3-3' stroke='%237c818c' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
         background-repeat: no-repeat;
         background-position: right 12px center;
         padding-right: 34px;
@@ -182,27 +245,27 @@
       /* Resume upload */
       .resume-drop {
         position: relative;
-        padding: 22px;
+        padding: 24px;
         border: 1px dashed var(--border-strong);
-        border-radius: 10px;
-        background: var(--surface-1);
+        border-radius: 11px;
+        background: var(--bg-1);
         text-align: center;
         cursor: pointer;
         transition: border-color 200ms ease, background 200ms ease;
       }
       .resume-drop:hover {
-        border-color: var(--accent-bright);
-        background: var(--surface-2);
+        border-color: var(--ray-red);
+        background: rgba(255, 99, 99, 0.04);
       }
       .resume-drop.filled {
         border-style: solid;
-        border-color: var(--accent-bright);
-        background: rgba(113, 112, 255, 0.06);
+        border-color: var(--ray-green);
+        background: rgba(95, 201, 146, 0.06);
       }
       .resume-drop.parsing {
         border-style: solid;
-        border-color: var(--accent);
-        background: rgba(94, 106, 210, 0.06);
+        border-color: var(--ray-yellow);
+        background: rgba(255, 188, 51, 0.06);
       }
       .resume-drop input[type="file"] {
         position: absolute;
@@ -217,21 +280,26 @@
         margin-bottom: 8px;
       }
       .resume-label {
-        font-size: 13px;
-        font-weight: 510;
+        font-size: 13.5px;
+        font-weight: 600;
         color: var(--text-primary);
-        margin-bottom: 3px;
+        margin-bottom: 4px;
+        letter-spacing: 0.1px;
       }
       .resume-hint {
-        font-size: 11px;
-        color: var(--text-subtle);
+        font-size: 11.5px;
+        color: var(--text-muted);
+        letter-spacing: 0.1px;
       }
       .resume-status {
-        font-size: 11px;
-        color: var(--accent-bright);
-        margin-top: 6px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--ray-green);
+        margin-top: 8px;
         display: none;
+        letter-spacing: 0.05em;
       }
+      .resume-drop.parsing .resume-status { color: var(--ray-yellow); }
       .resume-drop.filled .resume-status,
       .resume-drop.parsing .resume-status {
         display: block;
@@ -241,79 +309,93 @@
       .consent-row {
         display: flex;
         align-items: flex-start;
-        gap: 10px;
-        padding: 12px 14px;
-        background: var(--surface-1);
+        gap: 11px;
+        padding: 14px 15px;
+        background: var(--bg-1);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: 9px;
         cursor: pointer;
         transition: border-color 160ms ease, background 160ms ease;
       }
       .consent-row:hover {
         border-color: var(--border-strong);
+        background: var(--surface-1);
       }
       .consent-row input[type="checkbox"] {
         flex-shrink: 0;
         width: 18px;
         height: 18px;
         margin-top: 1px;
-        accent-color: var(--accent-bright);
+        accent-color: var(--ray-red);
         cursor: pointer;
       }
       .consent-row span {
         font-size: 12.5px;
         color: var(--text-secondary);
         line-height: 1.5;
-        letter-spacing: -0.138px;
+        letter-spacing: 0.1px;
       }
 
       /* Submit */
       .submit {
-        margin-top: 10px;
-        padding: 14px 24px;
+        margin-top: 8px;
+        padding: 15px 26px;
         font-family: inherit;
         font-size: 15px;
-        font-weight: 510;
-        font-feature-settings: "cv01", "ss03";
-        letter-spacing: -0.165px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
         color: #ffffff;
-        background: var(--accent);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
+        background: linear-gradient(180deg, var(--ray-red-bright), var(--ray-red));
+        border: 0;
+        border-radius: 10px;
         cursor: pointer;
-        transition: background-color 160ms ease, transform 120ms ease;
+        transition: transform 160ms ease, filter 160ms ease, box-shadow 200ms ease;
         -webkit-appearance: none;
+        box-shadow: var(--shadow-btn);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
-      .submit:hover:not(:disabled) { background: var(--accent-hover); }
-      .submit:active:not(:disabled) { transform: translateY(0.5px); }
+      .submit:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+      }
+      .submit:active:not(:disabled) { transform: translateY(0); }
       .submit:disabled {
         opacity: 0.4;
         cursor: not-allowed;
+        filter: saturate(0.5);
       }
 
       .hint-row {
         text-align: center;
-        font-size: 11px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
         color: var(--text-subtle);
-        margin-top: 4px;
+        margin-top: 6px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       .error-box {
         display: none;
         padding: 12px 14px;
         background: rgba(239, 68, 68, 0.08);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        border-radius: 8px;
+        border: 1px solid rgba(239, 68, 68, 0.32);
+        border-radius: 9px;
         color: #fca5a5;
         font-size: 12.5px;
         line-height: 1.5;
+        letter-spacing: 0.1px;
       }
       .error-box.visible { display: block; }
 
       @media (max-width: 540px) {
-        .wrap { padding: 28px 18px calc(40px + env(safe-area-inset-bottom)); }
-        h1 { font-size: 26px; letter-spacing: -0.572px; }
-        .subtitle { font-size: 13px; }
+        .wrap { padding: 30px 16px calc(42px + env(safe-area-inset-bottom)); }
+        h1 { font-size: 28px; letter-spacing: -0.4px; }
+        .subtitle { font-size: 13px; margin-bottom: 28px; }
+        form { padding: 20px 18px 18px; border-radius: 12px; }
       }
     </style>
   </head>
@@ -394,16 +476,14 @@
 
         <button type="submit" class="submit" id="submit-btn" disabled>
           <span id="submit-label">Start interview</span>
+          <span class="arrow">→</span>
         </button>
 
-        <div class="hint-row">You'll need camera and microphone access on the next page</div>
+        <div class="hint-row">Camera and mic required on the next page</div>
       </form>
     </div>
 
     <script>
-      // ──────────────────────────────────────────────────────────────
-      //  Query params → pre-fill if provided
-      // ──────────────────────────────────────────────────────────────
       const qs = new URLSearchParams(location.search);
       const URL_ROLE = qs.get("role") || "hospitality";
       const URL_AGENCY = qs.get("agency") || "our staffing team";
@@ -418,9 +498,7 @@
       document.getElementById("role-badge").textContent = prettyRole;
       document.title = `Apply — ${prettyRole} — Voxaris`;
 
-      // ──────────────────────────────────────────────────────────────
-      //  Resume upload + PDF parse (pdf.js, client-side)
-      // ──────────────────────────────────────────────────────────────
+      // Resume upload + PDF parse (pdf.js, client-side)
       const resumeDrop = document.getElementById("resume-drop");
       const resumeFile = document.getElementById("resume-file");
       const resumeLabel = document.getElementById("resume-label");
@@ -463,7 +541,7 @@
         resumeDrop.classList.remove("filled");
         resumeDrop.classList.add("parsing");
         resumeLabel.textContent = "Parsing resume…";
-        resumeStatus.textContent = "Extracting text locally on your device";
+        resumeStatus.textContent = "EXTRACTING TEXT LOCALLY";
 
         try {
           const text = await parsePdf(f);
@@ -472,7 +550,7 @@
           resumeDrop.classList.add("filled");
           resumeLabel.textContent = f.name;
           const wordCount = text.split(/\s+/).filter(Boolean).length;
-          resumeStatus.textContent = `✓ Parsed ${wordCount.toLocaleString()} words — ready`;
+          resumeStatus.textContent = `✓ PARSED ${wordCount.toLocaleString()} WORDS — READY`;
           validateForm();
         } catch (err) {
           console.error("pdf parse failed:", err);
@@ -485,9 +563,7 @@
         }
       });
 
-      // ──────────────────────────────────────────────────────────────
-      //  Form validation
-      // ──────────────────────────────────────────────────────────────
+      // Form validation
       const form = document.getElementById("apply-form");
       const submitBtn = document.getElementById("submit-btn");
       const errorBox = document.getElementById("error-box");
@@ -501,13 +577,7 @@
       }
 
       function validateForm() {
-        const required = [
-          "first_name",
-          "last_name",
-          "email",
-          "phone",
-          "years_experience",
-        ];
+        const required = ["first_name", "last_name", "email", "phone", "years_experience"];
         const allFilled = required.every((id) => {
           const el = document.getElementById(id);
           return el && el.value && el.value.trim().length > 0;
@@ -520,9 +590,7 @@
       form.addEventListener("change", validateForm);
       document.getElementById("consent-check").addEventListener("change", validateForm);
 
-      // ──────────────────────────────────────────────────────────────
-      //  Submit handler
-      // ──────────────────────────────────────────────────────────────
+      // Submit handler
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         hideError();
@@ -570,7 +638,6 @@
             throw new Error(data.error || "Couldn't start the interview.");
           }
 
-          // Hand off to the live video page with the conversation URL pre-loaded
           const params = new URLSearchParams({
             conversation_id: data.conversation_id,
             conversation_url: data.conversation_url,
