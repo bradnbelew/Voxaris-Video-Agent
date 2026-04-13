@@ -310,6 +310,25 @@ module.exports = async (req, res) => {
       console.warn("putSession seed failed:", e.message);
     }
 
+    // Notify recruiter dashboard of new interview
+    try {
+      const { triggerDashboard } = require("../../../shared/dashboard-trigger");
+      triggerDashboard("interview_started", conversationId, {
+        candidate_name,
+        candidate_email: email || null,
+        candidate_phone: phone || null,
+        applied_role: roleData.title,
+        resume_text: resume_text || null,
+        years_experience: years_experience || null,
+        most_recent_employer: most_recent_employer || null,
+        consent_given: consent_given === true,
+        consent_timestamp: consent_timestamp || null,
+        source: "video_interview",
+      });
+    } catch (e) {
+      console.warn("dashboard trigger failed:", e.message);
+    }
+
     res.status(200).json({
       ok: true,
       conversation_id: conversationId,

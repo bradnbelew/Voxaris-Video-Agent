@@ -19,6 +19,7 @@ const {
   pushDlq,
 } = require("../../../shared/session-store");
 const { triggerN8n } = require("../../../shared/n8n-trigger");
+const { triggerDashboard } = require("../../../shared/dashboard-trigger");
 const { logStaffingSession } = require("../../../staffing/lib/sheets-logger");
 const { verifyWebhook } = require("../../../shared/webhook-verify");
 
@@ -141,6 +142,14 @@ async function processWebhookAsync(payload) {
     };
     await putSession(conversationId, finalSession);
     await logStaffingSession(finalSession);
+    triggerDashboard("conversation_ended", conversationId, {
+      status: finalSession.status,
+      disqualified: finalSession.disqualified || false,
+      disqualification_reason: finalSession.disqualification_reason || null,
+      ended_at: finalSession.ended_at,
+      completed_at: finalSession.completed_at || null,
+      perception_signals: finalSession.perception_signals || [],
+    });
     return;
   }
 
@@ -152,6 +161,11 @@ async function processWebhookAsync(payload) {
       last_guardrail_at: new Date().toISOString(),
     };
     await putSession(conversationId, updated);
+    triggerDashboard("guardrail_triggered", conversationId, {
+      guardrail: payload.guardrail_name,
+      triggered_at: updated.last_guardrail_at,
+      context: payload.context || null,
+    });
     return;
   }
 
@@ -180,6 +194,11 @@ async function processWebhookAsync(payload) {
       merged.completed_at = new Date().toISOString();
       await putSession(conversationId, merged);
       await logStaffingSession(merged);
+      triggerDashboard("conversation_ended", conversationId, {
+        status: "ended",
+        disqualified: false,
+        ended_at: merged.completed_at,
+      });
       return;
     }
 
@@ -198,6 +217,13 @@ async function processWebhookAsync(payload) {
         email: merged.email || "",
         applied_role: merged.applied_role || "",
         conversation_id: conversationId,
+      });
+      triggerDashboard("conversation_ended", conversationId, {
+        status: "disqualified",
+        disqualified: true,
+        disqualification_reason: "work_authorization",
+        ended_at: merged.completed_at,
+        completed_at: merged.completed_at,
       });
       return;
     }
@@ -228,6 +254,11 @@ async function processWebhookAsync(payload) {
         conversation_id: conversationId,
       });
       await logStaffingSession(merged);
+      triggerDashboard("conversation_ended", conversationId, {
+        status: "completed",
+        disqualified: false,
+        completed_at: merged.completed_at,
+      });
       return;
     }
 
@@ -259,8 +290,20 @@ async function processWebhookAsync(payload) {
         conversation_id: conversationId,
       });
       await logStaffingSession(merged);
+      triggerDashboard("conversation_ended", conversationId, {
+        status: "completed",
+        disqualified: false,
+        completed_at: merged.completed_at,
+      });
       return;
     }
+
+    // Non-terminal objective — notify dashboard of progress
+    triggerDashboard("objective_completed", conversationId, {
+      objective: payload.objective_name,
+      output_variables: payload.output_variables || {},
+      event_log_entry: eventLog.length > 0 ? eventLog[eventLog.length - 1] : null,
+    });
 
     await putSession(conversationId, merged);
     return;
