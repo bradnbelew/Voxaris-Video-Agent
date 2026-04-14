@@ -509,6 +509,7 @@
       const qs = new URLSearchParams(location.search);
       const URL_ROLE = qs.get("role") || "hospitality";
       const URL_AGENCY = qs.get("agency") || "our staffing team";
+      const URL_CLIENT_TOKEN = qs.get("client") || null;
 
       const ROLE_LABEL = {
         hospitality: "Hotel / Banquet Server",
@@ -651,6 +652,7 @@
           candidate_name: `${firstName} ${lastName}`.trim(),
           role: URL_ROLE,
           agency_name: URL_AGENCY,
+          client_token: URL_CLIENT_TOKEN,
           email,
           phone,
           years_experience: yearsExp,
@@ -681,6 +683,7 @@
             agency: URL_AGENCY,
             prefetched: "1",
           });
+          if (URL_CLIENT_TOKEN) params.set("client", URL_CLIENT_TOKEN);
           // Pass the Daily meeting token through separately — Daily.js
           // requires it as a distinct `token` param in join(), not baked
           // into the URL. Stash it in sessionStorage since it's short-lived

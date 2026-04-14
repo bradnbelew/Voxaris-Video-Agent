@@ -790,6 +790,7 @@
         candidate_name: qs.get("candidate_name") || qs.get("name") || "there",
         role: qs.get("role") || "hospitality",
         agency_name: qs.get("agency") || "our staffing team",
+        client_token: qs.get("client") || null,
       };
 
       let conversationId = null;
