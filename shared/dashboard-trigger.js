@@ -1,6 +1,10 @@
 /**
  * Dashboard webhook trigger — fire-and-forget POST to the Voxaris recruiter dashboard.
  * Pattern mirrors n8n-trigger.js — never throws, caller can fire without try/catch.
+ *
+ * org_id is now passed explicitly per-request (resolved from client token)
+ * rather than read from DASHBOARD_ORG_ID env var. Falls back to env var
+ * for backward compatibility with legacy single-tenant deployments.
  */
 
 const https = require("https");
@@ -9,19 +13,23 @@ const { URL } = require("url");
 
 const DASHBOARD_URL = process.env.DASHBOARD_WEBHOOK_URL;
 const DASHBOARD_SECRET = process.env.DASHBOARD_WEBHOOK_SECRET;
-const ORG_ID = process.env.DASHBOARD_ORG_ID;
 
 /**
  * @param {string} eventType — "interview_started" | "objective_completed" | "conversation_ended" | "guardrail_triggered"
  * @param {string} conversationId
  * @param {object} data — event-specific payload
+ * @param {string|null} orgId — organization_id resolved from client token (or null to fall back to env)
  */
-async function triggerDashboard(eventType, conversationId, data) {
+async function triggerDashboard(eventType, conversationId, data, orgId = null) {
   if (!DASHBOARD_URL) {
     return { ok: false, error: "DASHBOARD_WEBHOOK_URL not configured" };
   }
-  if (!ORG_ID) {
-    return { ok: false, error: "DASHBOARD_ORG_ID not configured" };
+
+  // Use passed orgId first, fall back to env var for legacy deployments
+  const organizationId = orgId || process.env.DASHBOARD_ORG_ID || null;
+
+  if (!organizationId) {
+    return { ok: false, error: "No organization_id — set DASHBOARD_ORG_ID or pass a client token" };
   }
 
   let parsed;
@@ -32,7 +40,7 @@ async function triggerDashboard(eventType, conversationId, data) {
   }
 
   const body = JSON.stringify({
-    organization_id: ORG_ID,
+    organization_id: organizationId,
     conversation_id: conversationId,
     event_type: eventType,
     data: data || {},

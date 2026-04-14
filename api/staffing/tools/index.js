@@ -149,7 +149,7 @@ async function processWebhookAsync(payload) {
       ended_at: finalSession.ended_at,
       completed_at: finalSession.completed_at || null,
       perception_signals: finalSession.perception_signals || [],
-    });
+    }, finalSession.organization_id || null);
     return;
   }
 
@@ -165,7 +165,7 @@ async function processWebhookAsync(payload) {
       guardrail: payload.guardrail_name,
       triggered_at: updated.last_guardrail_at,
       context: payload.context || null,
-    });
+    }, existing.organization_id || null);
     return;
   }
 
@@ -198,7 +198,7 @@ async function processWebhookAsync(payload) {
         status: "ended",
         disqualified: false,
         ended_at: merged.completed_at,
-      });
+      }, merged.organization_id || null);
       return;
     }
 
@@ -224,7 +224,7 @@ async function processWebhookAsync(payload) {
         disqualification_reason: "work_authorization",
         ended_at: merged.completed_at,
         completed_at: merged.completed_at,
-      });
+      }, merged.organization_id || null);
       return;
     }
 
@@ -258,7 +258,7 @@ async function processWebhookAsync(payload) {
         status: "completed",
         disqualified: false,
         completed_at: merged.completed_at,
-      });
+      }, merged.organization_id || null);
       return;
     }
 
@@ -294,7 +294,7 @@ async function processWebhookAsync(payload) {
         status: "completed",
         disqualified: false,
         completed_at: merged.completed_at,
-      });
+      }, merged.organization_id || null);
       return;
     }
 
@@ -303,7 +303,7 @@ async function processWebhookAsync(payload) {
       objective: payload.objective_name,
       output_variables: payload.output_variables || {},
       event_log_entry: eventLog.length > 0 ? eventLog[eventLog.length - 1] : null,
-    });
+    }, merged.organization_id || null);
 
     await putSession(conversationId, merged);
     return;

@@ -36,6 +36,7 @@ const https = require("https");
 const { config } = require("../../../staffing/config/staffing-config");
 const { buildRoleContext } = require("../../../staffing/lib/role-context");
 const { putSession } = require("../../../shared/session-store");
+const { resolveToken } = require("../../../shared/token-resolver");
 
 const TAVUS_HOST = "tavusapi.com";
 const MAX_RESUME_CHARS = 12000; // safety cap on resume text injection
@@ -162,6 +163,7 @@ module.exports = async (req, res) => {
       candidate_name = "there",
       role = "general",
       agency_name = "our staffing team",
+      client_token,        // ← new: client token from ?client= URL param
       // Pre-interview form fields (optional for legacy flows)
       email,
       phone,
@@ -173,6 +175,18 @@ module.exports = async (req, res) => {
       bipa_consent,
       bipa_consent_timestamp,
     } = body;
+
+    // ── Resolve org from client token ───────────────────────────────
+    // client_token comes from ?client=tk_xxx in the interview URL.
+    // Falls back to DASHBOARD_ORG_ID env var for legacy deployments.
+    const orgId = await resolveToken(client_token || null);
+    if (!orgId) {
+      res.status(400).json({
+        ok: false,
+        error: "Invalid or missing client token. Use ?client=your_token in the interview URL.",
+      });
+      return;
+    }
 
     // ── EU AI Act block ─────────────────────────────────────────────
     // Art. 5(1)(f) bans emotion recognition in the workplace. Raven-1
@@ -285,6 +299,7 @@ module.exports = async (req, res) => {
     const seed = {
       conversation_id: conversationId,
       vertical: "staffing",
+      organization_id: orgId,
       candidate_name,
       applied_role: roleData.title,
       role_key: role,
@@ -324,7 +339,7 @@ module.exports = async (req, res) => {
         consent_given: consent_given === true,
         consent_timestamp: consent_timestamp || null,
         source: "video_interview",
-      });
+      }, orgId); // ← pass resolved orgId
     } catch (e) {
       console.warn("dashboard trigger failed:", e.message);
     }
