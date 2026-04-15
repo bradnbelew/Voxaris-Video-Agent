@@ -39,6 +39,7 @@
         --text-muted: #7c818c;
         --text-subtle: #555962;
         --ray-red: #ff6363;
+        --brand-color: var(--ray-red);
         --ray-red-bright: #ff7a7a;
         --ray-red-glow: rgba(255, 99, 99, 0.22);
         --ray-blue: #55b3ff;
@@ -401,7 +402,10 @@
   </head>
   <body>
     <div class="wrap">
-      <div class="brand">Voxaris</div>
+      <div id="brand-logo-wrap" style="display:none; text-align:center; margin-bottom:12px;">
+        <img id="brand-logo" src="" alt="" style="max-height:40px; max-width:160px; object-fit:contain;" />
+      </div>
+      <div class="brand" id="brand-name">Voxaris</div>
 
       <div class="role-badge-wrap">
         <span class="role-badge" id="role-badge">Screening Interview</span>
@@ -506,6 +510,31 @@
     </div>
 
     <script>
+      (async function loadBrand() {
+        try {
+          const params = new URLSearchParams(window.location.search)
+          const clientToken = params.get('client')
+          if (!clientToken) return
+          const res = await fetch(`/api/staffing/brand?client=${encodeURIComponent(clientToken)}`)
+          if (!res.ok) return
+          const brand = await res.json()
+          if (brand.company_name) {
+            const el = document.getElementById('brand-name')
+            if (el) el.textContent = brand.company_name
+            document.title = `Apply — ${brand.company_name}`
+          }
+          if (brand.logo_url) {
+            const wrap = document.getElementById('brand-logo-wrap')
+            const img = document.getElementById('brand-logo')
+            if (wrap && img) { img.src = brand.logo_url; wrap.style.display = 'block' }
+          }
+          if (brand.primary_color) {
+            document.documentElement.style.setProperty('--ray-red', brand.primary_color)
+            document.documentElement.style.setProperty('--brand-color', brand.primary_color)
+          }
+        } catch { /* silent — default branding shows */ }
+      })()
+
       const qs = new URLSearchParams(location.search);
       const URL_ROLE = qs.get("role") || "hospitality";
       const URL_AGENCY = qs.get("agency") || "our staffing team";

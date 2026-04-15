@@ -38,6 +38,92 @@ const { buildRoleContext } = require("../../../staffing/lib/role-context");
 const { putSession } = require("../../../shared/session-store");
 const { resolveToken } = require("../../../shared/token-resolver");
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+async function fetchRoleFromDB(roleId, orgId) {
+  try {
+    const { createClient } = require('@supabase/supabase-js')
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const { data: role, error } = await supabase
+      .from('roles')
+      .select('*')
+      .eq('id', roleId)
+      .eq('organization_id', orgId)
+      .eq('active', true)
+      .single()
+    if (error || !role) return null
+    return role
+  } catch (e) {
+    console.warn('fetchRoleFromDB failed:', e.message)
+    return null
+  }
+}
+
+function buildRoleContextFromDB(role, candidateName, agencyName) {
+  const bqs = Array.isArray(role.behavioral_questions) ? role.behavioral_questions : []
+  const mhs = Array.isArray(role.must_haves) ? role.must_haves : []
+  const lines = [
+    'JOB DETAILS:',
+    `- Role: ${role.title}`,
+    role.venue_type   ? `- Location/Venue: ${role.venue_type}` : null,
+    role.pay_range    ? `- Pay: ${role.pay_range}` : null,
+    role.shift        ? `- Schedule: ${role.shift}` : null,
+    mhs.length        ? `- Requirements: ${mhs.join(', ')}` : null,
+    '',
+    bqs.length ? 'BEHAVIORAL QUESTIONS TO ASK (one at a time, after collecting experience and availability):' : null,
+    ...bqs.map((q, i) => `${i + 1}. "${q}"`),
+    '',
+    `Agency Notes: This is a ${agencyName || 'staffing partner'} placement.`,
+    `Candidate Name: ${candidateName || 'Unknown'}`,
+    'Applied Via: Voxaris VideoAgent intake flow',
+  ].filter(l => l !== null)
+  return {
+    contextString: lines.join('\n'),
+    role: {
+      title: role.title,
+      venue_type: role.venue_type || '',
+      pay_range: role.pay_range || 'Competitive',
+      shift: role.shift || 'Flexible',
+      must_haves: mhs,
+    },
+  }
+}
+
+async function checkPlanLimit(orgId) {
+  try {
+    const { createClient } = require('@supabase/supabase-js')
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('plan, monthly_interview_limit')
+      .eq('id', orgId)
+      .single()
+    if (!org) return { allowed: true }
+    const limit = org.monthly_interview_limit || 50
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    const { count } = await supabase
+      .from('usage_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .eq('event_type', 'interview_created')
+      .gte('created_at', monthStart)
+    return { allowed: (count || 0) < limit, used: count || 0, limit, plan: org.plan }
+  } catch (e) {
+    console.warn('checkPlanLimit failed:', e.message)
+    return { allowed: true }
+  }
+}
+
+async function recordUsageEvent(orgId) {
+  try {
+    const { createClient } = require('@supabase/supabase-js')
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    await supabase.from('usage_events').insert({ organization_id: orgId, event_type: 'interview_created' })
+  } catch (e) {
+    console.warn('recordUsageEvent failed:', e.message)
+  }
+}
+
 const TAVUS_HOST = "tavusapi.com";
 const MAX_RESUME_CHARS = 12000; // safety cap on resume text injection
 
@@ -164,6 +250,13 @@ module.exports = async (req, res) => {
       role = "general",
       agency_name = "our staffing team",
       client_token,        // ← new: client token from ?client= URL param
+    } = body;
+
+    const roleParam = body.role
+      || new URL(req.url, 'http://localhost').searchParams.get('role')
+      || 'general'
+
+    const {
       // Pre-interview form fields (optional for legacy flows)
       email,
       phone,
@@ -242,11 +335,23 @@ module.exports = async (req, res) => {
       `https://${req.headers["x-forwarded-host"] || req.headers.host || "localhost"}`;
     const callbackUrl = `${baseUrl}/api/staffing/tools`;
 
-    const { contextString: roleContext, role: roleData } = buildRoleContext(
-      role,
-      candidate_name,
-      agency_name
-    );
+    let roleContext, roleData
+    if (UUID_RE.test(roleParam) && orgId) {
+      const dbRole = await fetchRoleFromDB(roleParam, orgId)
+      if (dbRole) {
+        ;({ contextString: roleContext, role: roleData } = buildRoleContextFromDB(dbRole, candidate_name, agency_name))
+        // Increment interview count async — fire and forget
+        try {
+          const { createClient } = require('@supabase/supabase-js')
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+          sb.from('roles').update({ interview_count: dbRole.interview_count + 1 }).eq('id', roleParam).then(() => {})
+        } catch {}
+      } else {
+        ;({ contextString: roleContext, role: roleData } = buildRoleContext('general', candidate_name, agency_name))
+      }
+    } else {
+      ;({ contextString: roleContext, role: roleData } = buildRoleContext(roleParam, candidate_name, agency_name))
+    }
 
     // Build the candidate brief first so it appears at the top of the
     // conversational_context — Jordan reads top-down and the candidate
@@ -269,6 +374,15 @@ module.exports = async (req, res) => {
       : roleContext;
 
     const greeting = `Hey ${candidate_name}! Thanks so much for taking the time — I'm Jordan, and I'll be doing your pre-screening today for the ${roleData.title} role with ${agency_name}. This should take about 10 minutes and it's really just a conversation, so feel free to be yourself. Sound good?`;
+
+    const planCheck = await checkPlanLimit(orgId)
+    if (!planCheck.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error: `Monthly interview limit reached (${planCheck.used}/${planCheck.limit} on ${planCheck.plan} plan). Contact support to upgrade.`,
+        upgrade_url: 'https://voxaris.io/upgrade',
+      })
+    }
 
     const tavusBody = {
       persona_id: config.personaId,
@@ -296,6 +410,8 @@ module.exports = async (req, res) => {
     const conversationUrl = tavus.conversation_url;
     const meetingToken = tavus.meeting_token || null;
 
+    recordUsageEvent(orgId).catch(() => {})
+
     const seed = {
       conversation_id: conversationId,
       vertical: "staffing",
@@ -303,6 +419,7 @@ module.exports = async (req, res) => {
       candidate_name,
       applied_role: roleData.title,
       role_key: role,
+      role_id: UUID_RE.test(roleParam) ? roleParam : null,
       agency_name,
       // Pre-interview capture:
       email: email || null,

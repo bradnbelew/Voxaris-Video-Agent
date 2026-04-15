@@ -16,6 +16,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/staffing/brand", "destination": "/api/staffing/brand/index.js" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/realty", "destination": "/realty-embed.html" },
     { "source": "/staffing", "destination": "/staffing-embed.html" },
