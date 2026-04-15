@@ -268,6 +268,12 @@
         border-color: var(--ray-yellow);
         background: rgba(255, 188, 51, 0.06);
       }
+      .resume-drop.drag-over {
+        border-style: solid;
+        border-color: var(--ray-red);
+        background: rgba(255, 99, 99, 0.08);
+        transform: scale(1.01);
+      }
       .resume-drop input[type="file"] {
         position: absolute;
         inset: 0;
@@ -275,6 +281,7 @@
         height: 100%;
         opacity: 0;
         cursor: pointer;
+        pointer-events: none;
       }
       .resume-icon {
         font-size: 22px;
@@ -460,8 +467,8 @@
           <div class="resume-drop" id="resume-drop">
             <input type="file" id="resume-file" accept="application/pdf,.pdf" />
             <div class="resume-icon">📄</div>
-            <div class="resume-label" id="resume-label">Tap to upload your resume</div>
-            <div class="resume-hint">PDF only · text is processed locally on your device</div>
+            <div class="resume-label" id="resume-label">Drop your resume here or tap to browse</div>
+            <div class="resume-hint">PDF only · drag &amp; drop or click · processed locally on your device</div>
             <div class="resume-status" id="resume-status"></div>
           </div>
         </div>
@@ -574,18 +581,15 @@
         return text.trim();
       }
 
-      resumeFile.addEventListener("change", async (e) => {
-        const f = e.target.files && e.target.files[0];
+      async function processFile(f) {
         if (!f) return;
 
         if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) {
           showError("Please upload a PDF. We don't support .docx or .doc here yet.");
-          resumeFile.value = "";
           return;
         }
         if (f.size > 8 * 1024 * 1024) {
           showError("Resume is over 8 MB — please upload a smaller PDF.");
-          resumeFile.value = "";
           return;
         }
 
@@ -607,12 +611,44 @@
         } catch (err) {
           console.error("pdf parse failed:", err);
           resumeDrop.classList.remove("parsing", "filled");
-          resumeLabel.textContent = "Tap to upload your resume";
+          resumeLabel.textContent = "Drop your resume here or tap to browse";
           resumeStatus.textContent = "";
           resumeText = "";
           showError("Couldn't parse that PDF. You can skip the resume and continue.");
-          resumeFile.value = "";
         }
+      }
+
+      // Click anywhere on drop zone → open file picker
+      resumeDrop.addEventListener("click", (e) => {
+        if (e.target !== resumeFile) resumeFile.click();
+      });
+
+      // Drag-and-drop handlers
+      resumeDrop.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        resumeDrop.classList.add("drag-over");
+      });
+      resumeDrop.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        resumeDrop.classList.add("drag-over");
+      });
+      resumeDrop.addEventListener("dragleave", (e) => {
+        if (!resumeDrop.contains(e.relatedTarget)) {
+          resumeDrop.classList.remove("drag-over");
+        }
+      });
+      resumeDrop.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        resumeDrop.classList.remove("drag-over");
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        await processFile(f);
+      });
+
+      // File input change (from programmatic click)
+      resumeFile.addEventListener("change", async (e) => {
+        const f = e.target.files && e.target.files[0];
+        resumeFile.value = "";
+        await processFile(f);
       });
 
       // Form validation
